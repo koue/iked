@@ -27,6 +27,8 @@
 
 #include "dh.h"
 
+#include "compat.h"
+
 int	dh_init(struct group *);
 
 /* MODP */

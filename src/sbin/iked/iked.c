@@ -234,8 +234,11 @@ parent_configure(struct iked *env)
 	 * route - for using interfaces in iked.conf (SIOCGIFGMEMB)
 	 * sendfd - for ocsp sockets.
 	 */
+
+#ifdef __OpenBSD__
 	if (pledge("stdio rpath proc dns inet route sendfd", NULL) == -1)
 		fatal("pledge");
+#endif
 
 	config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 	config_setmode(env, env->sc_passive ? 1 : 0);

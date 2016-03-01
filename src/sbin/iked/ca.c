@@ -126,8 +126,11 @@ ca_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	 * rpath - for certificate files.
 	 * recvfd - for ocsp sockets.
 	 */
+
+#ifdef __OpenBSD__
 	if (pledge("stdio rpath recvfd", NULL) == -1)
 		fatal("pledge");
+#endif
 
 	ca_reset(ps, p, arg);
 }

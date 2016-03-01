@@ -37,6 +37,8 @@
 #include "types.h"
 #include "parser.h"
 
+#include "compat.h"
+
 #ifndef PREFIX
 #define PREFIX		""
 #endif

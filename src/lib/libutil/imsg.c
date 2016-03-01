@@ -27,6 +27,7 @@
 #include <unistd.h>
 
 #include "imsg.h"
+#include "compat.h"
 
 int	 imsg_fd_overhead = 0;
 

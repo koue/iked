@@ -150,8 +150,10 @@ ikev2_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	 * recvfd - for PFKEYv2 and the listening UDP sockets.
 	 * In theory, recvfd could be dropped after getting the fds once.
 	 */
+#ifdef __OpenBSD__
 	if (pledge("stdio inet recvfd", NULL) == -1)
 		fatal("pledge");
+#endif
 }
 
 int

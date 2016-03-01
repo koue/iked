@@ -68,8 +68,10 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 	 * cpath - for unlinking the control socket.
 	 * unix - for the control socket.
 	 */
+#ifdef __OpenBSD__
 	if (pledge("stdio cpath unix", NULL) == -1)
 		fatal("pledge");
+#endif
 }
 
 int

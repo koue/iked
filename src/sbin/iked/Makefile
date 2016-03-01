@@ -1,5 +1,6 @@
 # $OpenBSD: Makefile,v 1.15 2015/10/23 09:13:00 tedu Exp $
 
+LOCALBASE?= /usr/local
 PROG=		iked
 SRCS=		ca.c chap_ms.c config.c control.c crypto.c dh.c \
 		eap.c iked.c ikev2.c ikev2_msg.c ikev2_pld.c \
@@ -7,16 +8,33 @@ SRCS=		ca.c chap_ms.c config.c control.c crypto.c dh.c \
 		imsg_util.c smult_curve25519_ref.c
 SRCS+=		eap_map.c ikev2_map.c
 SRCS+=		parse.y
+
+.PATH:	${.CURDIR}/../../lib/libutil
+SRCS+=	imsg-buffer.c \
+	imsg.c
+
+.PATH:	${.CURDIR}/../../compat
+SRCS+=	explicit_bzero.c \
+	getdtablecount.c \
+	reallocarray.c
+
 MAN=		iked.conf.5 iked.8
 #NOMAN=		yes
 
-LDADD=		-lutil -levent -lcrypto
+LDADD=		-lutil -levent -lcrypto -lprocstat
 DPADD=		${LIBUTIL} ${LIBEVENT} ${LIBCRYPTO}
 CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
 CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
+CFLAGS+=	-I${.CURDIR} \
+		-I${LOCALBASE}/include \
+		-L${LOCALBASE}/lib \
+		-I${.CURDIR}/../../compat \
+		-I${.CURDIR}/../../lib/libutil \
+		-I${.CURDIR}/../../sys \
+		-D__dead=''
 CLEANFILES+=	y.tab.h ikev2_map.c eap_map.c
 GENERATED=	ikev2_map.c eap_map.c
 

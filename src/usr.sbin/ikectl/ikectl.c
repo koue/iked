@@ -205,9 +205,11 @@ main(int argc, char *argv[])
 	case CA_KEY_DELETE:
 	case CA_KEY_INSTALL:
 	case CA_KEY_IMPORT:
+#ifdef __OpenBSD__
 		if (pledge("stdio proc exec rpath wpath cpath fattr tty", NULL)
 		    == -1)
 			err(1, "pledge");
+#endif
 		ca_opt(res);
 		break;
 	case NONE:
@@ -238,8 +240,10 @@ main(int argc, char *argv[])
 		err(1, "connect: %s", sock);
 	}
 
+#ifdef __OpenBSD__
 	if (pledge("stdio", NULL) == -1)
 		err(1, "pledge");
+#endif
 
 	if (res->ibuf != NULL)
 		ibuf = res->ibuf;
