@@ -24,13 +24,13 @@
 #endif
 
 #ifndef IKED_CONFIG
-#define IKED_CONFIG		"/etc/iked.conf"
+#define IKED_CONFIG		"/usr/local/etc/iked.conf"
 #endif
 
 #define IKED_SOCKET		"/var/run/iked.sock"
 
 #ifndef IKED_CA
-#define IKED_CA			"/etc/iked/"
+#define IKED_CA			"/usr/local/etc/iked/"
 #endif
 
 #define IKED_CA_DIR		"ca/"
