@@ -40,7 +40,7 @@
 #include "compat.h"
 
 #ifndef PREFIX
-#define PREFIX		""
+#define PREFIX		"/usr/local"
 #endif
 #ifndef SSLDIR
 #define SSLDIR		PREFIX "/etc/ssl"
@@ -54,7 +54,7 @@
 #endif
 
 #ifndef PATH_OPENSSL
-#define PATH_OPENSSL	"/usr/bin/openssl"
+#define PATH_OPENSSL	"/usr/local/bin/openssl"
 #endif
 #ifndef PATH_ZIP
 #define PATH_ZIP	"/usr/local/bin/zip"
