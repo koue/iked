@@ -1,6 +1,7 @@
-/*	$OpenBSD: iked.c,v 1.30 2015/12/07 12:46:37 reyk Exp $	*/
+/*	$OpenBSD: iked.c,v 1.37 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -110,6 +111,11 @@ main(int argc, char *argv[])
 		}
 	}
 
+	argc -= optind;
+	argv += optind;
+	if (argc > 0)
+		usage();
+
 	if ((env = calloc(1, sizeof(*env))) == NULL)
 		fatal("calloc: env");
 
@@ -140,7 +146,10 @@ main(int argc, char *argv[])
 	ps->ps_csock.cs_name = IKED_SOCKET;
 
 	log_init(debug, LOG_DAEMON);
-	log_verbose(verbose);
+	log_setverbose(verbose);
+
+	if (opts & IKED_OPT_NOACTION)
+		ps->ps_noaction = 1;
 
 	if (!debug && daemon(0, 0) == -1)
 		err(1, "failed to daemonize");
@@ -200,6 +209,11 @@ parent_configure(struct iked *env)
 	env->sc_pfkey = -1;
 	config_setpfkey(env, PROC_IKEV2);
 
+	/* Send private and public keys to cert after forking the children */
+	if (config_setkeys(env) == -1)
+		fatalx("%s: failed to send keys", __func__);
+	config_setreset(env, RESET_CA, PROC_CERT);
+
 	/* Now compile the policies and calculate skip steps */
 	config_setcompile(env, PROC_IKEV2);
 
@@ -237,6 +251,8 @@ parent_configure(struct iked *env)
 	if (pledge("stdio rpath proc dns inet route sendfd", NULL) == -1)
 		fatal("pledge");
 
+	config_setmobike(env);
+	config_setfragmentation(env);
 	config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 	config_setmode(env, env->sc_passive ? 1 : 0);
 	config_setocsp(env);
@@ -255,6 +271,8 @@ parent_reload(struct iked *env, int reset, const char *filename)
 
 	if (reset == RESET_RELOAD) {
 		config_setreset(env, RESET_POLICY, PROC_IKEV2);
+		if (config_setkeys(env) == -1)
+			fatalx("%s: failed to send keys", __func__);
 		config_setreset(env, RESET_CA, PROC_CERT);
 
 		if (parse_config(filename, env) == -1) {
@@ -265,6 +283,8 @@ parent_reload(struct iked *env, int reset, const char *filename)
 		/* Re-compile policies and skip steps */
 		config_setcompile(env, PROC_IKEV2);
 
+		config_setmobike(env);
+		config_setfragmentation(env);
 		config_setcoupled(env, env->sc_decoupled ? 0 : 1);
 		config_setmode(env, env->sc_passive ? 1 : 0);
 		config_setocsp(env);
@@ -391,6 +411,12 @@ parent_dispatch_control(int fd, struct privsep_proc *p, struct imsg *imsg)
 		parent_reload(env, 0, str);
 		free(str);
 		break;
+	case IMSG_CTL_VERBOSE:
+		proc_forward_imsg(&env->sc_ps, imsg, PROC_IKEV2, -1);
+		proc_forward_imsg(&env->sc_ps, imsg, PROC_CERT, -1);
+
+		/* return 1 to let proc.c handle it locally */
+		return (1);
 	default:
 		return (-1);
 	}

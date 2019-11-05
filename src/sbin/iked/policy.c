@@ -1,4 +1,4 @@
-/*	$OpenBSD: policy.c,v 1.41 2015/10/20 06:42:59 reyk Exp $	*/
+/*	$OpenBSD: policy.c,v 1.48 2019/08/12 07:40:45 tobhe Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -240,14 +240,14 @@ sa_state(struct iked *env, struct iked_sa *sa, int state)
 	sa->sa_state = state;
 	if (ostate != IKEV2_STATE_INIT &&
 	    !sa_stateok(sa, state)) {
-		log_debug("%s: cannot switch: %s -> %s", __func__, a, b);
+		log_debug("%s: cannot switch: %s -> %s", SPI_SA(sa, __func__), a, b);
 		sa->sa_state = ostate;
 	} else if (ostate != sa->sa_state) {
 		switch (state) {
 		case IKEV2_STATE_ESTABLISHED:
 		case IKEV2_STATE_CLOSED:
 			log_info("%s: %s -> %s from %s to %s policy '%s'",
-			    __func__, a, b,
+			    SPI_SA(sa, __func__), a, b,
 			    print_host((struct sockaddr *)&sa->sa_peer.addr,
 			    NULL, 0),
 			    print_host((struct sockaddr *)&sa->sa_local.addr,
@@ -343,7 +343,15 @@ sa_new(struct iked *env, uint64_t ispi, uint64_t rspi,
 	if (initiator && sa->sa_hdr.sh_rspi == 0 && rspi)
 		sa->sa_hdr.sh_rspi = rspi;
 
-	if (sa->sa_policy == NULL) {
+	if (pol == NULL && sa->sa_policy == NULL)
+		fatalx("%s: sa %p no policy", __func__, sa);
+	else if (sa->sa_policy == NULL) {
+		/* Increment refcount if the policy has refcounting enabled. */
+		if (pol->pol_flags & IKED_POLICY_REFCNT) {
+			log_info("%s: sa %p old pol %p pol_refcnt %d",
+			    __func__, sa, pol, pol->pol_refcnt);
+			policy_ref(env, pol);
+		}
 		sa->sa_policy = pol;
 		TAILQ_INSERT_TAIL(&pol->pol_sapeers, sa, sa_peer_entry);
 	} else
@@ -384,12 +392,55 @@ sa_free(struct iked *env, struct iked_sa *sa)
 	    print_spi(sa->sa_hdr.sh_rspi, 8));
 
 	/* IKE rekeying running? */
-	if (sa->sa_next) {
-		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_next);
-		config_free_sa(env, sa->sa_next);
+	if (sa->sa_nexti) {
+		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nexti);
+		config_free_sa(env, sa->sa_nexti);
+	}
+	if (sa->sa_nextr) {
+		RB_REMOVE(iked_sas, &env->sc_sas, sa->sa_nextr);
+		config_free_sa(env, sa->sa_nextr);
 	}
 	RB_REMOVE(iked_sas, &env->sc_sas, sa);
 	config_free_sa(env, sa);
+}
+
+/* oflow did replace active flow, so we need to re-activate a matching flow */
+int
+flow_replace(struct iked *env, struct iked_flow *oflow)
+{
+	struct iked_sa		*sa;
+	struct iked_flow	*flow, *other;
+
+	if (!oflow->flow_loaded)
+		return (-1);
+	RB_FOREACH(sa, iked_sas, &env->sc_sas) {
+		if (oflow->flow_ikesa == sa ||
+		    sa->sa_state != IKEV2_STATE_ESTABLISHED)
+			continue;
+		TAILQ_FOREACH(flow, &sa->sa_flows, flow_entry) {
+			if (flow == oflow ||
+			    flow->flow_loaded || !flow_equal(flow, oflow))
+				continue;
+			if ((other = RB_FIND(iked_flows, &env->sc_activeflows,
+			    flow)) != NULL) {
+				/* XXX should not happen */
+				log_debug("%s: found flow %p for %p/%p",
+				    __func__, other, flow, other);
+				return (-1);
+			}
+			if (pfkey_flow_add(env->sc_pfkey, flow) != 0) {
+				log_debug("%s: failed to load flow", __func__);
+				return (-1);
+			}
+			RB_INSERT(iked_flows, &env->sc_activeflows, flow);
+			log_debug("%s: loaded flow %p replaces %p", __func__,
+			    flow, oflow);
+			/* check for matching flow if we get deleted, too */
+			flow->flow_replacing = 1;
+			return (0);
+		}
+	}
+	return (-1);
 }
 
 void
@@ -405,7 +456,9 @@ sa_free_flows(struct iked *env, struct iked_saflows *head)
 		if (flow->flow_loaded)
 			RB_REMOVE(iked_flows, &env->sc_activeflows, flow);
 		TAILQ_REMOVE(head, flow, flow_entry);
-		(void)pfkey_flow_delete(env->sc_pfkey, flow);
+		if (!flow->flow_replacing ||
+		    flow_replace(env, flow) != 0)
+			(void)pfkey_flow_delete(env->sc_pfkey, flow);
 		flow_free(flow);
 	}
 }
@@ -429,6 +482,8 @@ sa_address(struct iked_sa *sa, struct iked_addr *addr,
 void
 childsa_free(struct iked_childsa *csa)
 {
+	struct iked_childsa *csb;
+
 	if (csa->csa_children) {
 		/* XXX should not happen */
 		log_warnx("%s: trying to remove CSA %p children %u",
@@ -437,6 +492,8 @@ childsa_free(struct iked_childsa *csa)
 	}
 	if (csa->csa_parent)
 		csa->csa_parent->csa_children--;
+	if ((csb = csa->csa_peersa) != NULL)
+		csb->csa_peersa = NULL;
 	ibuf_release(csa->csa_encrkey);
 	ibuf_release(csa->csa_integrkey);
 	free(csa);
@@ -522,6 +579,13 @@ sa_addrpool_cmp(struct iked_sa *a, struct iked_sa *b)
 	    (struct sockaddr *)&b->sa_addrpool->addr, -1));
 }
 
+static __inline int
+sa_addrpool6_cmp(struct iked_sa *a, struct iked_sa *b)
+{
+	return (sockaddr_cmp((struct sockaddr *)&a->sa_addrpool6->addr,
+	    (struct sockaddr *)&b->sa_addrpool6->addr, -1));
+}
+
 struct iked_user *
 user_lookup(struct iked *env, const char *user)
 {
@@ -570,20 +634,29 @@ flow_cmp(struct iked_flow *a, struct iked_flow *b)
 {
 	int		diff = 0;
 
-	if (a->flow_peer && b->flow_peer)
-		diff = addr_cmp(a->flow_peer, b->flow_peer, 0);
+	if (!diff)
+		diff = (int)a->flow_ipproto - (int)b->flow_ipproto;
+	if (!diff)
+		diff = (int)a->flow_saproto - (int)b->flow_saproto;
+	if (!diff)
+		diff = (int)a->flow_dir - (int)b->flow_dir;
 	if (!diff)
 		diff = addr_cmp(&a->flow_dst, &b->flow_dst, 1);
 	if (!diff)
 		diff = addr_cmp(&a->flow_src, &b->flow_src, 1);
-	if (!diff && a->flow_dir && b->flow_dir)
-		diff = (int)a->flow_dir - (int)b->flow_dir;
 
 	return (diff);
 }
 
+int
+flow_equal(struct iked_flow *a, struct iked_flow *b)
+{
+	return (flow_cmp(a, b) == 0);
+}
+
 RB_GENERATE(iked_sas, iked_sa, sa_entry, sa_cmp);
 RB_GENERATE(iked_addrpool, iked_sa, sa_addrpool_entry, sa_addrpool_cmp);
+RB_GENERATE(iked_addrpool6, iked_sa, sa_addrpool6_entry, sa_addrpool6_cmp);
 RB_GENERATE(iked_users, iked_user, usr_entry, user_cmp);
 RB_GENERATE(iked_activesas, iked_childsa, csa_node, childsa_cmp);
 RB_GENERATE(iked_flows, iked_flow, flow_node, flow_cmp);
