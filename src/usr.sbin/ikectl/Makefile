@@ -16,9 +16,11 @@ CFLAGS+=	-Wmissing-declarations
 CFLAGS+=	-Wshadow -Wpointer-arith -Wcast-qual
 CFLAGS+=	-Wsign-compare
 CFLAGS+=	-I${.CURDIR}/../../../libimsg/src/lib/libutil \
+		-I${.CURDIR}/../../../libevent/src/lib/libevent \
 		-I${LOCALBASE}/include \
 		-D__dead=''
-LDFLAGS+=	-L${.CURDIR}/../../../libimsg/src/lib/libutil
+LDFLAGS+=	-L${.CURDIR}/../../../libimsg/src/lib/libutil \
+		-L${.CURDIR}/../../../libevent/src/lib/libevent
 
 distribution:
 	${INSTALL} -C -o root -g wheel -m 0644 ${.CURDIR}/ikeca.cnf \

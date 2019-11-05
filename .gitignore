@@ -9,6 +9,8 @@
 *.req
 *.srl
 src/sbin/iked/eap_map.c
+src/sbin/iked/iked
 src/sbin/iked/ikev2_map.c
 src/sbin/iked/parse.c
 src/sbin/iked/parse.h
+src/usr.sbin/ikectl/ikectl

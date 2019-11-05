@@ -12,7 +12,7 @@ SRCS+=		parse.y
 MAN=		iked.conf.5 iked.8
 #NOMAN=		yes
 
-LDADD=		-limsg -levent -lcrypto -lprocstat
+LDADD=		-limsg -levent -lcrypto -lprocstat -ltls
 DPADD=		${LIBCRYPTO}
 CFLAGS+=	-Wall -I${.CURDIR}
 CFLAGS+=	-Wstrict-prototypes -Wmissing-prototypes
@@ -26,7 +26,8 @@ CFLAGS+=	-I${.CURDIR} \
 		-I${LOCALBASE}/include \
 		-D__dead=''
 LDFLAGS+=	-L${.CURDIR}/../../../libimsg/src/lib/libutil \
-		-L${.CURDIR}/../../../libevent/src/lib/libevent
+		-L${.CURDIR}/../../../libevent/src/lib/libevent \
+		-L${LOCALBASE}/lib
 CLEANFILES+=	ikev2_map.c eap_map.c
 GENERATED=	ikev2_map.c eap_map.c
 

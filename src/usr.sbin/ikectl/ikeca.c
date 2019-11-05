@@ -38,7 +38,7 @@
 #include "types.h"
 #include "parser.h"
 
-#include "compat.h"
+#include "iked_compat.h"
 
 #ifndef PREFIX
 #define PREFIX		"/usr/local"
