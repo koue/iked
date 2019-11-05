@@ -1,6 +1,7 @@
-/*	$OpenBSD: types.h,v 1.25 2016/01/27 20:20:30 gsoares Exp $	*/
+/*	$OpenBSD: types.h,v 1.30 2019/05/11 16:30:23 patrick Exp $	*/
 
 /*
+ * Copyright (c) 2019 Tobias Heider <tobias.heider@stusta.de>
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
  *
  * Permission to use, copy, modify, and distribute this software for any
@@ -56,6 +57,12 @@
 #define IKED_NONCE_MIN		16	/* XXX 128 bits */
 #define IKED_NONCE_SIZE		32	/* XXX 256 bits */
 
+#define IKED_COOKIE_MIN		1	/* min 1 bytes */
+#define IKED_COOKIE_MAX		64	/* max 64 bytes */
+
+#define IKED_COOKIE2_MIN	8	/* min 8 bytes */
+#define IKED_COOKIE2_MAX	64	/* max 64 bytes */
+
 #define IKED_ID_SIZE		1024	/* XXX should be dynamic */
 #define IKED_PSK_SIZE		1024	/* XXX should be dynamic */
 #define IKED_MSGBUF_MAX		8192
@@ -96,11 +103,14 @@ enum imsg_type {
 	IMSG_CTL_DECOUPLE,
 	IMSG_CTL_ACTIVE,
 	IMSG_CTL_PASSIVE,
+	IMSG_CTL_MOBIKE,
+	IMSG_CTL_FRAGMENTATION,
 	IMSG_COMPILE,
 	IMSG_UDP_SOCKET,
 	IMSG_PFKEY_SOCKET,
 	IMSG_IKE_MESSAGE,
 	IMSG_CFG_POLICY,
+	IMSG_CFG_FLOW,
 	IMSG_CFG_USER,
 	IMSG_CERTREQ,
 	IMSG_CERT,
@@ -108,7 +118,9 @@ enum imsg_type {
 	IMSG_CERTINVALID,
 	IMSG_OCSP_FD,
 	IMSG_OCSP_URL,
-	IMSG_AUTH
+	IMSG_AUTH,
+	IMSG_PRIVKEY,
+	IMSG_PUBKEY
 };
 
 enum privsep_procid {

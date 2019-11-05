@@ -1,4 +1,4 @@
-/*	$OpenBSD: control.c,v 1.21 2015/12/05 13:09:46 claudio Exp $	*/
+/*	$OpenBSD: control.c,v 1.26 2018/08/06 06:30:06 mestre Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -64,12 +64,11 @@ control_run(struct privsep *ps, struct privsep_proc *p, void *arg)
 {
 	/*
 	 * pledge in the control process:
- 	 * stdio - for malloc and basic I/O including events.
-	 * cpath - for unlinking the control socket.
+	 * stdio - for malloc and basic I/O including events.
 	 * unix - for the control socket.
 	 */
 #ifdef __OpenBSD__
-	if (pledge("stdio cpath unix", NULL) == -1)
+	if (pledge("stdio unix", NULL) == -1)
 		fatal("pledge");
 #endif
 }
@@ -153,16 +152,6 @@ control_listen(struct control_sock *cs)
 	return (0);
 }
 
-void
-control_cleanup(struct control_sock *cs)
-{
-	if (cs->cs_name == NULL)
-		return;
-	event_del(&cs->cs_ev);
-	event_del(&cs->cs_evt);
-	(void)unlink(cs->cs_name);
-}
-
 /* ARGSUSED */
 void
 control_accept(int listenfd, short event, void *arg)
@@ -217,9 +206,10 @@ control_connbyfd(int fd)
 {
 	struct ctl_conn	*c;
 
-	for (c = TAILQ_FIRST(&ctl_conns); c != NULL && c->iev.ibuf.fd != fd;
-	    c = TAILQ_NEXT(c, entry))
-		;	/* nothing */
+	TAILQ_FOREACH(c, &ctl_conns, entry) {
+		if (c->iev.ibuf.fd == fd)
+			break;
+	}
 
 	return (c);
 }
@@ -305,10 +295,9 @@ control_dispatch_imsg(int fd, short event, void *arg)
 			IMSG_SIZE_CHECK(&imsg, &v);
 
 			memcpy(&v, imsg.data, sizeof(v));
-			log_verbose(v);
+			log_setverbose(v);
 
 			proc_forward_imsg(&env->sc_ps, &imsg, PROC_PARENT, -1);
-			proc_forward_imsg(&env->sc_ps, &imsg, PROC_IKEV2, -1);
 			break;
 		case IMSG_CTL_RELOAD:
 		case IMSG_CTL_RESET:

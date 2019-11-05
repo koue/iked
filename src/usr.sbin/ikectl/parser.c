@@ -1,4 +1,4 @@
-/*	$OpenBSD: parser.c,v 1.15 2015/11/02 10:27:44 jsg Exp $	*/
+/*	$OpenBSD: parser.c,v 1.17 2018/06/18 10:20:19 benno Exp $	*/
 
 /*
  * Copyright (c) 2010-2013 Reyk Floeter <reyk@openbsd.org>
@@ -67,7 +67,6 @@ static const struct token t_ca_ex_pass[];
 static const struct token t_ca_modifiers[];
 static const struct token t_ca_cert[];
 static const struct token t_ca_cert_extusage[];
-static const struct token t_ca_cert_ex_peer[];
 static const struct token t_ca_cert_modifiers[];
 static const struct token t_ca_key[];
 static const struct token t_ca_key_modifiers[];
@@ -274,6 +273,7 @@ parse_addr(const char *word)
 	hints.ai_family = PF_UNSPEC;
 	hints.ai_flags = AI_NUMERICHOST;
 	if (getaddrinfo(word, "0", &hints, &r) == 0) {
+		freeaddrinfo(r);
 		return (0);
 	}
 
@@ -328,7 +328,6 @@ match_token(char *word, const struct token table[])
 		case ADDRESS:
 		case FQDN:
 			if (!match && word != NULL && strlen(word) > 0) {
-				parse_addr(word);
 				res.host = strdup(word);
 				if (parse_addr(word) == 0)
 					res.htype = HOST_IPADDR;

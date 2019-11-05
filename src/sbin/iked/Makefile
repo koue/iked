@@ -1,4 +1,4 @@
-# $OpenBSD: Makefile,v 1.15 2015/10/23 09:13:00 tedu Exp $
+# $OpenBSD: Makefile,v 1.17 2017/07/19 12:50:32 espie Exp $
 
 LOCALBASE?=	/usr/local
 PROG=		iked
@@ -27,8 +27,10 @@ CFLAGS+=	-I${.CURDIR} \
 		-D__dead=''
 LDFLAGS+=	-L${.CURDIR}/../../../libimsg/src/lib/libutil \
 		-L${.CURDIR}/../../../libevent/src/lib/libevent
-CLEANFILES+=	y.tab.h ikev2_map.c eap_map.c
+CLEANFILES+=	ikev2_map.c eap_map.c
 GENERATED=	ikev2_map.c eap_map.c
+
+YFLAGS=
 
 ikev2_map.c: genmap.sh ikev2.h
 	/bin/sh ${.CURDIR}/genmap.sh ${.CURDIR}/ikev2.h ikev2 > $@
@@ -37,8 +39,6 @@ ikev2_map.c: genmap.sh ikev2.h
 eap_map.c: genmap.sh eap.h
 	/bin/sh ${.CURDIR}/genmap.sh ${.CURDIR}/eap.h eap > $@
 	@touch $@
-
-${PROG} beforedepend: ${GENERATED}
 
 .include <bsd.prog.mk>
 

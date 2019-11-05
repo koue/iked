@@ -1,0 +1,5470 @@
+2019-09-26 12:08  tobhe
+
+	* sbin/iked/ikev2.c: Use SPI_SA() instead of __func__ in all
+	  logging calls. Use log_info instead of log_debug in error cases.
+
+	  ok bluhm@ sthen@
+
+2019-09-26 07:33  tobhe
+
+	* sbin/iked/parse.y: Fix leaks by cleaning up after configuration
+	  parser.
+
+	  ok bluhm@
+
+2019-08-29 14:56  tobhe
+
+	* sbin/iked/ikev2.c: Remove redundant ikev2_msg_valid_ike_sa()
+	  call.
+
+	  ok patrick@
+
+2019-08-26 16:41  tobhe
+
+	* sbin/iked/parse.y: Fix file descriptor leak in config parser.
+	  Inspired by bgpd parse.y.
+
+	  ok patrick@
+
+2019-08-24 13:24  tobhe
+
+	* sbin/iked/iked.conf.5: Clarify "protected-subnet" option.
+
+	  Explain the use of the option (according to the RFC) and make
+	  clear it is not usually needed for subnets specified in "from"
+	  and "to" options.
+
+	  ok sthen@
+
+2019-08-24 13:09  tobhe
+
+	* sbin/iked/: ikev2.c, ikev2_pld.c: Fix conflict when IKE SA and
+	  Child SA rekeying happen at the same time.
+
+	  If the IKE SA changes during an ongoing rekey exchange, messages
+	  may be lost because they were inteded for the old SA. An iked
+	  instance that is waiting for a rekey Child SA response will no
+	  longer reply to IKE SA rekey requests until the ongoing Child SA
+	  exchange has completed or timed out.
+
+	  ok sthen@
+
+2019-08-16 12:11  tobhe
+
+	* sbin/iked/iked.conf.5: Add explanation for the [IKE/ESP only]
+	  column of the transform table.
+
+	  Ok kn@
+
+2019-08-16 07:42  tobhe
+
+	* sbin/iked/parse.y: Fix segfault in parser when specifying an
+	  invalid transform.  For all transforms the error case only
+	  printed the error but did not exit. YYERROR was added to exit
+	  gracefully instead of segfaulting later.
+
+	  ok benno@
+
+2019-08-14 08:35  tobhe
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c: Fix NAT traversal
+	  detection bug when "local" option is not explicitly set.
+
+	  ok patrick@
+
+2019-08-12 07:40  tobhe
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c, policy.c:
+	  Prepend SPI to send and recv log messages to see which line
+	  belongs to which SA. Use IKE specific terms peer and local
+	  instead of to and from.
+
+	  ok reyk@ patrick@
+
+2019-07-03 03:24  deraadt
+
+	* sbin/iked/ca.c: snprintf/vsnprintf return < 0 on error, rather
+	  than -1.
+
+2019-06-28 13:32  deraadt
+
+	* sbin/iked/: ocsp.c, parse.y: When system calls indicate an error
+	  they return -1, not some arbitrary value < 0.  errno is only
+	  updated in this case.  Change all (most?) callers of syscalls to
+	  follow this better, and let's see if this strictness helps us in
+	  the future.
+
+2019-05-11 16:30  patrick
+
+	* sbin/iked/: config.c, iked.c, iked.conf.5, iked.h, ikev2.c,
+	  ikev2.h, ikev2_msg.c, ikev2_pld.c, parse.y, types.h: Add support
+	  for IKEv2 Message Fragmentation as defined in RFC 7383.
+
+	  ok sthen@
+
+2019-05-10 15:18  patrick
+
+	* sbin/iked/ikev2.c: Set the IKED_REQ_INFORMATIONAL flag when
+	  sending a delete request during rekeying to make sure that the
+	  response is not rejected.
+
+	  From Tobias Heider "much more stable" dhill@
+
+2019-05-10 15:02  patrick
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c: Enforce messages after
+	  IKE_SA_INIT exchange to contain only encrypted payloads.  Also
+	  increment message id only for valid messages.
+
+	  From Tobias Heider ok sthen@
+
+2019-05-08 23:59  tedu
+
+	* usr.sbin/ikectl/ikeca.c: convert system() calls to an execv()
+	  like interface.  avoids sh difficulties, etc.  from Matthew
+	  Martin.  ok deraadt reyk
+
+2019-04-02 09:42  sthen
+
+	* sbin/iked/: dh.c, iked.conf.5, ikev2.h, parse.y: When curve25519
+	  was added to iked, it was based on the internet-draft and used a
+	  private-use group number. Switch to the group number assigned in
+	  RFC8031 as used in other implementations.
+
+	  "this is the right time" deraadt@ "I like the idea" reyk@
+
+	  If you use iked<>iked and have configured curve25519 in iked.conf
+	  (this is not the default), you can switch to another PFS group
+	  before updating then switch back. OpenBSD 6.3+ allows multiple
+	  "ikesa" lines so the initiator can choose which to use.
+
+2019-03-04 08:42  stsp
+
+	* sys/net/pfkeyv2.h: Add padding to struct sadb_x_counter to make
+	  it comply with alignment constraints documented in RFC 2367
+	  section 2.2.	Fixes 'ipsecctl -ss' segfault observed on i386.
+	  with and ok deraadt@ visa@ mikeb@
+
+2019-02-27 06:33  sthen
+
+	* sbin/iked/: ca.c, iked.8, ikev2.c, ikev2.h: update RFC
+	  references, from tobias_heider at genua.de, ok claudio@
+
+2019-02-26 18:05  patrick
+
+	* sbin/iked/ikev2.c: Fix sending IKEV2_CFG_INTERNAL_IP6_DNS,
+	  IKEV2_CFG_INTERNAL_IP6_NBNS, IKEV2_CFG_INTERNAL_IP6_DHCP and
+	  IKEV2_CFG_INTERNAL_IP6_SERVER by using the correct member in the
+	  iked_addr struct for the address.
+
+	  From Aram Havarnean
+
+2019-02-26 14:21  sthen
+
+	* usr.sbin/ikectl/ikeca.c: ikectl's built-in CA command for simple
+	  configurations has a fixed certificate validity for the ca
+	  certificate. Raise this from 365 days to 4500 as expiry means
+	  installing new CA certificates on all client machines which can
+	  cause significant pain. This doesn't change the default validity
+	  for server certificates which remains at 1 year (controlled by
+	  ikeca.cnf) - refreshing key and certificate on these can be done
+	  easily without visiting all machines.   ok deraadt@
+
+2019-02-13 22:57  deraadt
+
+	* sbin/iked/parse.y: (unsigned) means (unsigned int) which on
+	  ptrdiff_t or size_t or other larger types really is a range
+	  reduction...	Almost any cast to (unsigned) is a bug.  ok millert
+	  tb benno
+
+2018-12-07 16:23  mpi
+
+	* sbin/iked/pfkey.c: Make sure the TAP extension is only added to
+	  the vector when needed.
+
+	  Fix a problem reported by Mark Patruck and dhill@
+
+	  ok markus@, dhill@
+
+2018-12-07 08:42  claudio
+
+	* sbin/iked/util.c: Make sure that the prefixlen returned by
+	  mask2prefixlen6 is never bigger than 128 also fail hard when the
+	  mask is non contiguous.  OK remi@
+
+2018-11-07 08:10  miko
+
+	* sbin/iked/parse.y: sync cmdline_symset() changes with
+	  src/usr.sbin; OK sashan@ claudio@
+
+2018-11-01 00:18  sashan
+
+	* sbin/iked/parse.y: - odd condition/test in PF lexer	(and other
+	  lexers too)
+
+	  This commit rectifies earlier change:
+
+	      in the lex... even inside quotes, a \ followed by space or
+	  tab should
+	      expand to space or tab, and a \ followed by newline should be
+	  ignored
+	      (as a line continuation).  compatible with the needs of
+	  hoststated
+	      (which has the most strict quoted string requirements), and
+	  ifstated
+	      (where one commonly does line continuations in strings).
+
+	  OK deraadt@, OK millert@
+
+2018-08-28 15:15  mpi
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Add per-TDB counters and
+	  a new SADB extension to export them to userland.
+
+	  Inputs from markus@, ok sthen@
+
+2018-08-06 06:30  mestre
+
+	* sbin/iked/: control.c, iked.h, proc.c: Remove cpath pledge(2)
+	  promise. We decided that not deleting the unix control sockets
+	  cause no harm and this way we close another attack surface by not
+	  allowing the daemon to create/delete any more files.
+
+	  OK kn@
+
+2018-07-12 15:51  mpi
+
+	* sys/netinet/ip_ipsp.h: Introduce ipsec_output_cb() to merge
+	  duplicate code and account for dropped packets in the output
+	  path.
+
+	  While here fix a memory leak when compression is not needed w/
+	  IPcomp.
+
+	  ok markus@
+
+2018-07-11 09:07  mpi
+
+	* sys/netinet/ip_ipsp.h: Convert AH & IPcomp to ipsec_input_cb()
+	  and count drops on input.
+
+	  ok markus@
+
+2018-07-11 07:39  krw
+
+	* sbin/iked/parse.y: Do for most running out of memory err() what
+	  was done for most running out of memory log_warn(). i.e. ("%s",
+	  __func__) instead of manual function names and redundant verbiage
+	  about which wrapper detected the out of memory condition.
+
+	  ok henning@
+
+2018-07-10 11:34  mpi
+
+	* sys/netinet/ip_ipsp.h: Introduce new IPsec (per-CPU) statistics
+	  and refactor ESP input callbacks to be able to count dropped
+	  packet.
+
+	  Having more generic statistics will help troubleshooting problems
+	  with specific tunnels.  Per-TDB counters are coming once all the
+	  refactoring bits are in.
+
+	  ok markus@
+
+2018-07-09 12:05  krw
+
+	* sbin/iked/parse.y: No need to mention which memory allocation
+	  entry point failed (malloc, calloc or strdup), we just need to
+	  log that we ran out of memory in a particular function.
+
+	  Recommended by florian@ and deraadt@
+
+	  ok benno@ henning@ tb@
+
+2018-07-08 17:15  krw
+
+	* sbin/iked/parse.y: Be consistent in warn() and log_warn() usage
+	  when running out of memory.
+
+	  Next step, be correct *and* consistent.
+
+	  ok dennis@ tb@ benno@ schwarze@
+
+2018-07-03 13:37  stsp
+
+	* sbin/iked/iked.8: Rephrase a misleading sentence in iked(8), and
+	  add a missing reference to RFC 7359.	Patch by David Dahlberg
+
+2018-06-22 13:20  rob
+
+	* sbin/iked/util.c: Use __func__ in log_debug calls.
+
+	  Ok gsoares@
+
+2018-06-18 10:20  benno
+
+	* usr.sbin/ikectl/parser.c: fix memory leak: freeaddrinfo() the
+	  data from getaddrinfo().  From Thomas Barabosch <thomas DOT
+	  barabosch AT fkie DOT fraunhofer DOT de> Thanks.  ok jca@
+
+2018-06-11 10:05  denis
+
+	* sbin/iked/parse.y: Fix an off-by-one line count when using
+	  include statements.
+
+	  Thanks to otto@ for the initial diff.
+
+	  OK benno@
+
+2018-04-26 14:12  krw
+
+	* sbin/iked/parse.y: Plug leak in error case of the common 'varset'
+	  implementations.
+
+	  ok benno@
+
+2018-03-22 21:11  patrick
+
+	* sbin/iked/ikev2_pld.c: The iked(8) fuzzer did not fuzz encrypted
+	  payloads.  With that changed the regression test uncovered code
+	  paths in the TS and CP payload parser that can trigger access to
+	  invalid memory locations.  This changes the TS and CP payload
+	  parsing to add additional length checks.
+
+	  With hshoexer@ and markus@; OK sthen@
+
+2018-03-16 12:31  mpi
+
+	* sbin/iked/iked.h: Consistently spell "IPsec" in comments and
+	  debug outputs.
+
+	  From Raf Czlonka, ok sthen@
+
+2018-03-05 14:30  patrick
+
+	* sbin/iked/ikev2.c: Outsource enabling/disabling the DPD and
+	  keepalive timers for SAs into their own functions.  Makes it
+	  easier to extend with other timers that work on established SAs
+	  and re-use the functionality in other places.  Also delete the
+	  timer before adding to fix a warning on config reload in certain
+	  circumstances.
+
+	  ok sthen@
+
+2018-01-31 13:25  patrick
+
+	* sbin/iked/: iked.conf.5, parse.y: Add support for specifying
+	  multiple transforms within a single proposal.  This gives us more
+	  flexibilty for negotiating with other IKEv2 setups.
+
+	  Tested by and ok sthen@
+
+2018-01-24 17:01  patrick
+
+	* sbin/iked/: iked.conf.5, parse.y: Implement support for
+	  specifying multiple proposals.  This means we can have a higher
+	  flexibility in negotiating with other peers, or even ease
+	  migration from one proposal to a more secure one.
+
+	  ok sthen@
+
+2017-12-23 10:30  patrick
+
+	* sbin/iked/ikev2.c: Since ikev2_init_recv() is supposed to only
+	  handle responses to an exchange that we initiatiated, we are not
+	  allowed to respond to such a msg.  Also we don't need the DH
+	  check in ikev2_sa_initiator_dh() as it's only called when we
+	  initiate, so the check would not run, or when we get a Create
+	  Child SA response, where an error should only lead to us having
+	  another attempt at an exchange.
+
+	  Found by and ok markus@
+
+2017-12-13 08:27  patrick
+
+	* sbin/iked/util.c: getsockname(2) needs to be passed the length of
+	  the input struct.
+
+	  ok jca@
+
+2017-12-07 22:47  patrick
+
+	* sbin/iked/ikev2_pld.c: Change the SA payload parser to parse more
+	  than the first proposal.  This allows us to select one of the
+	  peer's proposals (and not only the first).
+
+	  ok sthen@ hshoexer@
+
+2017-12-05 09:06  patrick
+
+	* sbin/iked/ikev2.c: When sending out a proposal we create an
+	  SA/SPI for the Child SAs if we are an initiator and store the
+	  information on the proposal, because we only had one proposal so
+	  far.	This changes the code to only create one SA on the first
+	  proposal and then apply the SPI to all other proposals as well.
+
+	  ok markus@
+
+2017-12-04 17:22  patrick
+
+	* sbin/iked/ikev2_pld.c: Remove duplicate check that never could
+	  execute because the exact same condition is handled a line
+	  before.
+
+2017-12-04 17:03  patrick
+
+	* sbin/iked/ikev2_pld.c: Consistently log "malformed payload"
+	  instead of "payload malformed", and replace "minimal" with
+	  "minimum".
+
+2017-12-04 16:57  patrick
+
+	* sbin/iked/ikev2_pld.c: Remove check that is now a duplicate due
+	  to recent refactoring.
+
+2017-12-04 16:52  patrick
+
+	* sbin/iked/ikev2_pld.c: The payloads are layered like onions, so
+	  you can validate one layer and then call the next one, which can
+	  then validate itself.  Thing is, most layers try to run
+	  validations on the upper layer, which is not useful and rather
+	  confusing.  This cleans it up.
+
+	  First change is that the generic payload parser does not anymore
+	  pass the length of the whole datagram, including all remaining
+	  payloads, but passes only the length of the specific payload to
+	  the specific payload parser.	Second change is that the payload
+	  validators don't check the length of the upper layer, but only
+	  verify their own lengths.
+
+	  Diff discussed with hshoexer@ and sthen@ Tested by sthen@
+
+2017-12-04 14:35  patrick
+
+	* sbin/iked/ikev2.c: Initialize variable, otherwise the pointer
+	  might contain stack garbage.
+
+2017-12-03 21:02  patrick
+
+	* sbin/iked/: ikev2.c, ikev2.h: If we wanted to send out more
+	  proposals than just one, we need to set a flag in the SA header
+	  that there is another proposal coming.  The "more" attribute
+	  borrows its values, as specified in the RFC, from IKEv1.
+
+	  ok sthen@
+
+2017-12-03 21:02  patrick
+
+	* sbin/iked/ikev2.c: The RFC specifies that to accept a proposal,
+	  we must select a transform for each transform type.  We do some
+	  sanity checks, for instance we do require an encryption transform
+	  for ESP, but that's not enough.  We need to check that for every
+	  proposed transform type we have found a matching transform in our
+	  own proposal.
+
+	  ok sthen@
+
+2017-12-01 20:19  patrick
+
+	* sbin/iked/parse.y: The RFC specifies that in an SA payload the
+	  proposals must be numbered starting with number 1.  Subsequent
+	  proposals must be one more than the previous proposal.
+
+	  ok sthen@
+
+2017-12-01 19:49  patrick
+
+	* sbin/iked/ikev2.c: Turns out that, as specified in the RFC, the
+	  initial Child SA does not do PFS and is assumed to be secured
+	  using the DH exchange in the first handshake.  Thus there is no
+	  KE/N payload in the IKE_AUTH exchange and we must not include a
+	  DH group other than None, which essentially means we must not
+	  supply any DH transforms in the IKE_AUTH messages.  So now we
+	  skip adding the DH transforms for initiating and responding to
+	  IKE_AUTH messages.
+
+	  ok sthen@
+
+2017-11-30 12:18  patrick
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c: Add support for
+	  rejecting IKE SA messages.  This means that we can reply to IKE
+	  SA INIT messages with no proposal chosen, as we already do for
+	  Child SAs.  For that the error "adding" is done in a new function
+	  shared by both send error handlers.  We need two "send error"
+	  functions because the init error is unencrypted, while all later
+	  ones are not.  Now we can add more cases, like Child SA not found
+	  or that the DH group is not what we expect.
+
+	  Save the IKE SA INIT responses, even if it's an error message, so
+	  we can retransmit it if the response is lost on the way back to
+	  the initiator and he tries again.  This also helps mitigate DoS
+	  attacks as specified in the RFC.  Only if it is indeed a new
+	  attempt, like after an INVALID KE PAYLOAD response, we can drop
+	  the old SA so that iked(8) can attempt to create a new SA.
+
+	  ok sthen@
+
+2017-11-29 01:25  claudio
+
+	* sbin/iked/util.c: Print_host is used mainly in printf style
+	  functions. So do not return NULL instead return "unknown".  OK
+	  beck@
+
+2017-11-27 18:39  patrick
+
+	* sbin/iked/: config.c, iked.c, iked.conf.5, iked.h, ikev2.c,
+	  ikev2_msg.c, ikev2_pld.c, parse.y, pfkey.c, policy.c, types.h:
+	  Implement MOBIKE (RFC 4555) support in iked(8), with us acting as
+	  responder.  In practice this support means that clients like
+	  iPhones can roam in different networks (LTE, WiFi) and change
+	  their external addresses without having to re-do the whole
+	  handshake.  It allows the client to choose how and when to change
+	  the external tunnel endpoint addresses on demand, depending on
+	  which network is better or even is connected at all.
+
+	  ok sthen@ tweaks from jmc@ tested by a handful
+
+2017-11-20 14:14  mpi
+
+	* sys/netinet/ip_ipsp.h: Keep kernel defines under #ifdef _KERNEL.
+
+	  ok bluhm@
+
+2017-11-20 10:56  mpi
+
+	* sys/net/pfkeyv2.h: Flush flows using the radix-tree instead of a
+	  global list.
+
+	  This will allows us to get rid of the list.
+
+	  ok visa@
+
+2017-11-15 15:45  patrick
+
+	* sbin/iked/parse.y: Reset the OCSP URL on config reload.
+	  Otherwise we end up not being able to disable OCSP without
+	  restarting iked.
+
+	  ok beck@ sthen@
+
+2017-11-15 11:48  mpi
+
+	* sys/netinet/ip_ipsp.h: Unbreak ENCDEBUG kernels by declaring
+	  `encdebug' in ip_ipsp.h
+
+2017-11-14 09:30  mpi
+
+	* sys/netinet/ip_ipsp.h: Introduce ipsec_sysctl() and move IPsec
+	  tunables where they belong.
+
+	  ok bluhm@, visa@
+
+2017-11-08 16:57  patrick
+
+	* sbin/iked/iked.c: Do not accept superfluous arguments.
+
+	  From Klemens Nanni.
+
+	  ok markus@
+
+2017-11-08 16:29  visa
+
+	* sys/netinet/ip_ipsp.h: Make {ah,esp,ipcomp}stat use percpu
+	  counters.
+
+	  OK bluhm@, mpi@
+
+2017-11-08 09:35  patrick
+
+	* sbin/iked/ikev2.c: For IPcomp we need to load explicit ESP-flows
+	  for the IPIP or IPCOMP tunneled packets, otherwise every packet
+	  between the gateways will be sent into the tunnel (e.g. ICMP,
+	  too).
+
+	  ok markus@
+
+2017-11-08 09:33  patrick
+
+	* usr.sbin/ikectl/ikeca.c: Since r1.41 the extensions are included
+	  in the CSR.  Thus ca_request() already sets the extension values
+	  and returns.	ca_sign() re-uses the information to write out the
+	  extension file.  Since ca_request() uses strings stored on the
+	  stack, on return the pointers to those strings will be unusable.
+	  To fix this, strdup() the strings passed ca_setenv() so we can
+	  re-use them in another scope.  And free() them when we clear the
+	  environment in ca_clrenv().
+
+	  Initial report and diff from Andrei-Marius Radu.
+
+	  ok markus@
+
+2017-10-30 09:53  patrick
+
+	* sbin/iked/ca.c: In the subjectAltName comparison, the bzero
+	  before the while-loop was lost while applying the diff.  This is
+	  means sanid could be passed uninitialized to
+	  ca_x509_subjectaltname_cmp(), where ibuf_release() could try to
+	  release a pointer which is essentially stack garbage.  While
+	  there I realized that the bzero() in the loop is essentially
+	  fatal, since every mismatch leads to a silent leak of ibufs.
+	  Since ca_x509_subjectaltname_cmp() releases and initializes the
+	  passed iked_id, we can safely call it multiple times after
+	  initializing sanid once before the loop.
+
+	  ok markus@
+
+2017-10-27 14:28  patrick
+
+	* sbin/iked/ca.c: Support multiple subjectAltNames by trying each
+	  existing until there is none or until we find one that matches.
+
+	  ok markus@
+
+2017-10-27 14:26  patrick
+
+	* sbin/iked/: dh.c, dh.h, ikev2.c: In the final RFC 5903 the
+	  computation for the DH shared secret changed.  Instead of the
+	  full point, only the X point is included.  Unfortunately this is
+	  a backwards incompatible change, so older ikeds won't be com-
+	  patible with this change.  Of course only if you use ECP.
+	  Anyway, this change makes us follow the RFC correctly.
+
+	  ok markus@
+
+2017-10-27 08:27  mpi
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Dump IPsec flows by
+	  iterating over the rafdix-tree.
+
+	  This enforces an order and will allow us to get rid of the global
+	  list.
+
+	  ok millert@, visa@, markus@
+
+2017-10-16 08:22  mpi
+
+	* sys/netinet/ip_ipsp.h: Last changes before running IPsec w/o
+	  KERNEL_LOCK().
+
+	  Put more NET_ASSERT_LOCK() and document which globals it
+	  protects.
+
+	  Add a mutex for pfkeyv2 globals.
+
+	  Convert ipsp_delete_acquire() to timeout_set_proc().
+
+	  Tested by Hrvoje Popovski, ok bluhm@ visa@
+
+2017-08-28 16:28  otto
+
+	* sbin/iked/crypto.c: fix char ** to const char ** conversion
+	  warning; ok mikeb@
+
+2017-07-19 12:50  espie
+
+	* sbin/iked/Makefile: more depends gc / yacc rules overhaul
+
+	  okay millert@
+
+2017-07-03 22:21  espie
+
+	* sbin/iked/Makefile: no need to generate y.tab.h if nothing uses
+	  it, set YFLAGS to nothing instead of CLEANFILES += y.tab.h
+
+	  okay millert@
+
+2017-06-26 09:08  patrick
+
+	* sys/netinet/ip_ipsp.h: Split a part of tdb_delete() into
+	  tdb_unlink() so that we can remove a TDB from the hash table
+	  without actually free()ing it.  That way we can modify the TDB
+	  and then put it back in using puttdb().
+
+	  ok claudio@
+
+2017-06-08 11:45  jsg
+
+	* usr.sbin/ikectl/ikeca.c: Invoke openssl with -passin file rather
+	  than -key in ca_revoke().  From Andrei-Marius Radu via sthen@
+
+2017-06-01 15:23  sthen
+
+	* sbin/iked/: iked.conf.5, ikev2.c: Expand $eapid in iked tags,
+	  allowing PF rules to be written based on EAP identity (username).
+	  OK mikeb@
+
+2017-05-31 06:46  jsg
+
+	* usr.sbin/ikectl/ikeca.c: ca_revoke() gets called two ways.
+	  Directly from ca_opt() with keyname set to the cert to revoke,
+	  and indirectly from ca_create() with a keyname set to NULL.
+
+	  ca_create() sets REQ_EXT so avoid setting it in ca_revoke() when
+	  keyname is NULL and the crl database is being initialised.
+
+	  Avoids "REQ_EXT already set" when creating a CA error introduced
+	  in rev 1.44 which set REQ_EXT unconditionally in ca_revoke().
+
+2017-05-29 14:28  claudio
+
+	* sys/net/pfkeyv2.h: Kill struct pfkey_version and move struct
+	  pfkeyv2_socket & dump_state to pfkeyv2.c. These structs are
+	  nowhere else needed.	OK gcc
+
+2017-05-29 10:55  claudio
+
+	* sys/net/pfkeyv2.h: PFKEY version 2 is the only pfkey version
+	  supported. No need for extra abstraction. First step of making
+	  PF_KEY a bit more like PF_ROUTE.  OK mpi@
+
+2017-05-26 19:11  claudio
+
+	* sys/net/pfkeyv2.h: There is only one version of pfkey in OpenBSD
+	  and this will not change any time soon so remove all the code to
+	  support multiple pfkey versions.  OK mpi@
+
+2017-05-24 04:55  jsg
+
+	* usr.sbin/ikectl/ikeca.c: Set REQ_EXT in req section so ikectl ca
+	  certificate revoke will work again.
+
+2017-05-22 22:23  bluhm
+
+	* sys/netinet/ip_ipsp.h: Move IPsec forward and local policy check
+	  functions to ipsec_input.c and give them better names.  input and
+	  OK mikeb@
+
+2017-05-21 02:37  deraadt
+
+	* sbin/iked/dh.c, usr.sbin/ikectl/ikeca.c: A few more freezero()
+	  uses ok yasuoka mikeb
+
+2017-05-18 10:56  bluhm
+
+	* sys/netinet/ip_ipsp.h: The function name ip4_input() is confusing
+	  as it also handles IPv6 packets.  This is the IP in IP protocol
+	  input function, so call it ipip_input().  Rename the existing
+	  ipip_input() to ipip_input_gif() as it is the input function used
+	  by the gif interface.  Pass the address family to make it
+	  consistent with pr_input.  Use __func__ in debug print and panic
+	  messages.  Move all ipip prototypes to the ip_ipip.h header file.
+	  OK dhill@ mpi@
+
+2017-05-06 15:55  bluhm
+
+	* sys/netinet/ip_ipsp.h: Convert the xformsw definition to C99
+	  style initializer.  Also fix the function declaration of
+	  ipe4_input() and avoid a wrong cast.	OK mikeb@ dhill@
+
+2017-04-26 10:42  henning
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c: cope with IP address
+	  changes. before, we were trying to resend the msg with the
+	  no-longer-available address over and over and over, requiring
+	  iked to be restarted eventually. instead, on EADDRNOTAVAIL,
+	  schedule SA deletion so a new one is set up shortly thereafter.
+	  ok reyk mikeb
+
+2017-04-24 07:07  reyk
+
+	* sbin/iked/parse.y: Fix configuration of ASN1_DN IDs.
+
+	  Public key authentication uses public key files that are stored
+	  in the /etc/iked/pubkeys/ directory where the IKE IDs are encoded
+	  as filenames.  This does not simply work with ASN1_DNs where the
+	  IDs include slashes and other special characters. Instead of
+	  breaking and failing when an ASN1_DN is configured, simply skip
+	  the public key lookup but allow to use it with certificates or
+	  PSKs.
+
+	  Reported and fix tested by Igor V. Gubenko - Thanks.
+
+2017-04-18 02:29  deraadt
+
+	* sbin/iked/pfkey.c: use freezero()
+
+2017-04-14 20:46  bluhm
+
+	* sys/netinet/ip_ipsp.h: Pass down the address family through the
+	  pr_input calls.  This allows to simplify code used for both IPv4
+	  and IPv6.  OK mikeb@ deraadt@
+
+2017-04-13 07:04  patrick
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, ikev2_pld.c: Add a NAT-T
+	  keepalive timer in case we are behind a NAT gateway.
+
+	  See RFC 5996, section 2.23, NAT Traversal:   In the case of a
+	  mismatching NAT_DETECTION_DESTINATION_IP hash, it   means that
+	  the system receiving the NAT_DETECTION_DESTINATION_IP   payload
+	  is behind a NAT and that system SHOULD start sending	 keepalive
+	  packets as defined in [UDPENCAPS].
+
+	  With markus@, ok reyk@
+
+2017-03-30 15:48  patrick
+
+	* sbin/iked/ikev2.c: Only close the SA if an error happens before
+	  ikev2_msg_init() was called to make sure we do not run
+	  ikev2_msg_cleanup() on an unitialized stack variable.
+
+	  ok deraadt@ reyk@
+
+2017-03-29 08:19  sthen
+
+	* usr.sbin/ikectl/ikeca.c: set REQ_EXT to x509v3_CA, fixing "ikectl
+	  ca XX create" inadvertently broken in r1.41.	ok reyk deraadt
+
+2017-03-28 19:52  reyk
+
+	* sbin/iked/ca.c: Add helpful debug messages to tell us why public
+	  key authentication failed.
+
+	  This is currently only visible in debug mode (eg. iked -dvv),
+	  some debug messages will be turned into regular warnings later.
+
+	  OK claudio@ deraadt@
+
+2017-03-28 16:56  reyk
+
+	* sbin/iked/parse.y: Remove RSA from the list of keywords, lookup
+	  is now done in a table.
+
+	  This lets us configure explicit old-style RSA again.
+
+	  OK mikeb@
+
+2017-03-28 16:25  reyk
+
+	* sbin/iked/ikev2.c: Don't send informational responses before
+	  we're having the key material.
+
+	  iked starts sending keepalive messages after authentication and
+	  after successfully completing the handshake.	Other
+	  implementations, like we've seen on Microsoft Azure, start
+	  sending keepalive messages right after receiving the first
+	  SA_INIT message when they set up the key material, even before we
+	  received the SA_INIT response to complete the DH exchange.  The
+	  solution is to ignore early keepalive messages before we're ready
+	  to encrypt our response, in the transition between SA_INIT and
+	  AUTH.  The peer should still accept one or more missed
+	  keepalives.
+
+	  OK mikeb@
+
+2017-03-28 16:15  reyk
+
+	* sbin/iked/ikev2.c: Returning -1 in an imsg handler like
+	  ikev2_dispatch_cert aborts iked.
+
+	  -1 means "I didn't handle or know this imsg", it should not be
+	  used to indicate an application error in this context.
+
+	  OK mikeb@
+
+2017-03-27 17:17  mikeb
+
+	* sbin/iked/: dh.c, dh.h, iked.h, ikev2.c, ikev2_pld.c: Don't cache
+	  the DH group in the policy
+
+	  When tearing IKE SA down, the DH group referred by it is
+	  destroyed, however it remains cached in the policy.  With the
+	  introduction of IKE SA rekeying we have extended the life of this
+	  dangling pointer by reusing it on new SAs.  So instead of caching
+	  the pointer in the policy we can store the DH group ID and create
+	  a DH group on demand using this parameter if it's specified.
+
+	  With and OK reyk
+
+2017-03-27 15:45  jmc
+
+	* sbin/iked/iked.conf.5: correct verb pattern;
+
+2017-03-27 10:43  mikeb
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, parse.y, types.h: Factor
+	  out flows into separate configuration messages
+
+	  We reach an imsg payload limit with just a few traffic selectors
+	  so in order to load more we need to split them up and send
+	  separately.
+
+	  Suggested and OK reyk
+
+2017-03-27 10:29  reyk
+
+	* sbin/iked/: config.c, crypto.c, ikev2.c, pfkey.c: spacing
+
+2017-03-27 10:24  reyk
+
+	* sbin/iked/: config.c, ikev2.c, pfkey.c: Fix another iked leak of
+	  SAs in pfkey_sa(), copy tags correctly.
+
+	  Diff from markus@ OK mikeb@ patrick@
+
+2017-03-27 10:21  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c, types.h:
+	  Add support to reflect the responder IKEv2 COOKIE.
+
+	  This fixes connecting to Azure VPN and other implementations that
+	  implement the IKEv2 COOKIE mechanism on the responder side.
+	  Azure decides to send you a responder COOKIE after too many
+	  connection attempts - we have to keep it and reflect it to
+	  establish a connection.  This implementation is only for the
+	  initiator (client) side, we do not support sending COOKIEs on the
+	  responder (server) side yet.
+
+	  OK patrick@ mikeb@
+
+2017-03-27 10:06  reyk
+
+	* sbin/iked/: ca.c, crypto.c, iked.8, iked.conf.5, iked.h, ikev2.c,
+	  ikev2.h, ikev2_msg.c, parse.y: Add support for RFC4754 (ECDSA)
+	  and RFC7427 authentication.
+
+	  These modes provide stronger and more flexible ways for
+	  authentication: while RSA public key auth relies on SHA-1 hashes,
+	  the news modes use SHA2-256 and up to SHA2-512 hashes.
+
+	  Original diff from markus@ with patches from mikeb@ and me.
+
+	  OK mikeb@ patrick@
+
+2017-03-23 05:29  jsg
+
+	* sbin/iked/iked.c: set ps_noaction to not fork uneeded children
+	  when checking config with -n
+
+	  ok mikeb@ reyk@
+
+2017-03-21 12:06  bluhm
+
+	* sbin/iked/log.c: From a syslog perspective it does not make sense
+	  to log fatal and warn with the same severity.  Switch log_warn()
+	  to LOG_ERR and keep fatal() at LOG_CRIT.  OK reyk@ florian@
+
+2017-03-13 18:49  mikeb
+
+	* sbin/iked/: config.c, iked.h, ikev2.c: Resolve simultaneous Child
+	  SA rekeying
+
+	  From and OK markus, OK reyk
+
+2017-03-13 18:48  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, policy.c: Resolve
+	  simultaneous IKE SA rekeying
+
+	  From and OK markus, OK reyk
+
+2017-03-13 18:28  reyk
+
+	* sbin/iked/: iked.h, ikev2.c: Make sure that proposal contains a
+	  DH group when rekeying with PFS enabled
+
+	  Via markus, OK mikeb@
+
+2017-03-13 17:41  reyk
+
+	* sbin/iked/: ikev2.c, ikev2_msg.c, pfkey.c: NAT-T improvements
+
+	  Move repeated creation of the NAT-T payload into a function,
+	  remove erroneous msg_offset, and improve NAT-T handling.
+
+	  From and OK markus, OK mikeb
+
+2017-03-13 17:23  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c: Don't rekey acquired Child SAs
+
+	  From and OK markus, OK reyk
+
+2017-03-13 15:07  patrick
+
+	* sbin/iked/iked.conf.5: Clarify iked.conf(5) manpage in regards to
+	  IP compression.
+
+	  ok markus@ reyk@
+
+2017-03-13 15:06  patrick
+
+	* sbin/iked/: iked.h, ikev2.c, pfkey.c: When setting up IPcomp
+	  flows for the networks 'A' and 'B' between gateways 'a' and 'b',
+	  we replace the ESP flow "A->B ESP" with an IPCOMP flow "A->B
+	  IPCOMP" and add a matching (transport mode) ESP flow between the
+	  gateways "a->b ESP".	The later is now marked with flow_ipcomp so
+	  it is not translated into "a->b IPCOMP" on rekeying.
+
+	  When SAs get deleted we do an extra loop to figure out if
+	  matching IPcomp SAs can now be removed, too.	This allows faster
+	  expiry of unused IPcomp SAs.
+
+	  Disable bytes lifetime for IP compression.
+
+	  ok markus@ reyk@
+
+2017-03-13 15:01  mikeb
+
+	* sbin/iked/policy.c: When freeing a Child SA make sure it's peer
+	  no longer points to it
+
+	  From and OK markus, OK reyk
+
+2017-03-13 14:57  reyk
+
+	* sbin/iked/: iked.h, ikev2.c: Fix and improve the IKE SA rekeying
+	  timeout, add a randomized jitter.
+
+	  Diff from markus@ with a small tweak from me.
+
+	  OK mikeb@ patrick@
+
+2017-03-13 14:50  mikeb
+
+	* sbin/iked/: ikev2.c, ikev2_pld.c: Improve reporting of
+	  authentication errors
+
+	  From and OK markus, OK reyk
+
+2017-03-13 14:33  patrick
+
+	* sbin/iked/: iked.h, ikev2.c, policy.c: flow_cmp() must compare
+	  the same flow-attributes as the kernel, otherwise we never can
+	  keep the in-daemon and the in-kernel idea of flows in sync and
+	  iked ends up deleting flows that are still in use.  Make use of
+	  flow_cmp() and a new flow_equal() instead of handcrafting the
+	  compare in an if.
+
+	  ok markus@ reyk@
+
+2017-03-13 14:19  patrick
+
+	* sbin/iked/policy.c: We need to call policy_ref() for policies
+	  that have refcounting enabled. Refcounting is enabled when a
+	  policy is removed during 'ikectl reload' and still has SAs point
+	  to it. On IKESA rekeying such a policy will be referenced by the
+	  new IKESA, so we need to adjust the refcount -- otherwise the
+	  policies get free()d too early and we will crash at some point.
+
+	  ok markus@ mikeb@ reyk@
+
+2017-02-28 16:46  bluhm
+
+	* sbin/iked/pfkey.c, sys/net/pfkeyv2.h: Depending on the addresses,
+	  ipsecctl(8) automatically groups sa bundles together.  Extend the
+	  kernel interface to export the bundle information to userland.
+	  Then ipsecctl -ss -v can show the internal relations.
+	  Unfortunately the header SADB_X_EXT_PROTOCOL was reused by
+	  SADB_X_GRPSPIS, so it cannot be used to transfer the second sa
+	  type with sysctl.  Introduce a new SADB_X_EXT_SATYPE2 and use it
+	  consistently.  OK hshoexer@ markus@
+
+2017-02-24 11:23  patrick
+
+	* sbin/iked/ikev2.c: In a scenario where a config reload happens
+	  during an IKE_AUTH exchange, and we move an SA from one to
+	  another policy, we need to make sure to do refcounting if the
+	  policies involved are already in the garbage collect phase.
+
+	  ok markus@ mikeb@
+
+2017-02-07 22:28  bluhm
+
+	* sys/netinet/ip_ipsp.h: Error propagation does neither make sense
+	  for ip input path nor for asynchronous callbacks.  Make the IPsec
+	  functions void, there is already a counter in the error path.  OK
+	  mpi@
+
+2017-02-03 08:23  guenther
+
+	* sbin/iked/iked.h: Stop assuming that in_{addr,port}_t are
+	  typedefed in <sys/types.h> and instead pull in <netinet/in.h> or
+	  <arpa/inet.h> when those are needed.
+
+	  ok florian@ beck@ millert@
+
+2017-01-31 21:35  sthen
+
+	* usr.sbin/ikectl/: ikeca.c, ikeca.cnf: Teach ikectl to include
+	  extensions in the CSR, rather than just adding them when signing
+	  the certificates by the local CA. This can make things easier if
+	  you want to take a CSR from ikectl to another CA for signing,
+	  they often copy extensions from the request.	ok reyk@
+
+2017-01-29 19:58  bluhm
+
+	* sys/netinet/ip_ipsp.h: Change the IPv4 pr_input function to the
+	  way IPv6 is implemented, to get rid of struct ip6protosw and some
+	  wrapper functions.  It is more consistent to have less different
+	  structures.  The divert_input functions cannot be called anyway,
+	  so remove them.  OK visa@ mpi@
+
+2017-01-26 13:03  bluhm
+
+	* sys/netinet/ip_ipsp.h: Reduce the difference between struct
+	  protosw and ip6protosw.  The IPv4 pr_ctlinput functions did
+	  return a void pointer that was always NULL and never used.  Make
+	  all functions void like in the IPv6 case.  OK mpi@
+
+2017-01-25 17:34  bluhm
+
+	* sys/netinet/ip_ipsp.h: Since raw_input() and route_input() are
+	  gone from pr_input, we can make the variable parameters of the
+	  protocol input functions fixed.  Also add the proto to make it
+	  similar to IPv6.  OK mpi@ guenther@ millert@
+
+2017-01-24 10:08  krw
+
+	* sys/net/pfkeyv2.h: A space here, a space there. Soon we're
+	  talking real whitespace rectification.
+
+2017-01-20 14:12  mikeb
+
+	* sbin/iked/ikev2.c: Add a warning when the address pool is
+	  exhausted
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 14:10  mikeb
+
+	* sbin/iked/: iked.h, imsg_util.c: Constify the data argument for
+	  ibuf_new
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 14:09  mikeb
+
+	* sbin/iked/ikev2_msg.c: Reset various pointers in
+	  ikev2_msg_cleanup
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 14:08  mikeb
+
+	* sbin/iked/ca.c: Make sure to free reference to the public key
+	  after decoding
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 13:58  mikeb
+
+	* sbin/iked/ikev2_msg.c: Closed SAs should never be treated as
+	  valid
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 13:56  mikeb
+
+	* sbin/iked/parse.y: Check bounds of the flows array when
+	  configuring traffic selectors
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 13:51  mikeb
+
+	* sbin/iked/ikev2.c: Verify the certificate imsg payload size
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 13:49  mikeb
+
+	* sbin/iked/ikev2_pld.c: Include only found SPIs into the
+	  PAYLOAD_DELETE message
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 13:47  mikeb
+
+	* sbin/iked/ikev2_pld.c: Minor formatting fix
+
+	  From and OK markus@, OK reyk
+
+2017-01-20 13:46  mikeb
+
+	* sbin/iked/ikev2.h: New RFC7383 define
+
+	  From and OK markus@, OK reyk
+
+2017-01-17 22:10  krw
+
+	* sbin/iked/control.c: Nuke some whitespace that keeps poking me in
+	  the eye as I try to steal code.
+
+2017-01-09 14:49  reyk
+
+	* sbin/iked/: control.c, iked.c, iked.h, log.c, proc.c, util.c:
+	  Stop accessing verbose and debug variables from log.c directly.
+
+	  This replaces log_verbose() and "extern int verbose" with the two
+	  functions log_setverbose() and log_getverbose().
+
+	  Pointed out by benno@ OK krw@ eric@ gilles@ (OK gilles@ for the
+	  snmpd bits as well)
+
+2017-01-09 14:04  krw
+
+	* sbin/iked/control.c: Replace hand-rolled for(;;) traversal of
+	  ctl_conns TAILQ with TAILQ_FOREACH().
+
+	  No intentional functional change.
+
+	  ok reyk@
+
+2017-01-08 20:31  reyk
+
+	* sbin/iked/log.c: Sync log.c with the latest version from
+	  vmd/log.c that preserves errno so it is safe calling log_* after
+	  an error without loosing the it.
+
+2017-01-05 12:42  krw
+
+	* sbin/iked/parse.y: Replace symset()'s hand-rolled for(;;)
+	  traversal of 'symhead' TAILQ with more modern TAILQ_FOREACH().
+	  This what symget() was already doing.
+
+	  Add paranoia '{}' around body of symget()'s TAILQ_FOREACH().
+
+	  No intentional functional change.
+
+	  ok bluhm@ otto@
+
+2017-01-04 12:31  mikeb
+
+	* sbin/iked/: dh.c, iked.conf.5, ikev2.h, parse.y: Remove modular
+	  exponential groups specified in RFC5114
+
+	  Brought up by doug@, ok reyk, djm, doug
+
+2017-01-03 17:51  reyk
+
+	* sbin/iked/: ca.c, config.c, iked.c, iked.h, types.h: Fix pledge
+	  of the ca process by calling the right function on startup.  As a
+	  related change, load the local.pub and local.key keys after
+	  privsep and reload them on SIGHUP/reload.
+
+	  OK mikeb@
+
+2016-11-28 16:27  mikeb
+
+	* sbin/iked/iked.conf.5: ikelifetime time spec is the same the one
+	  for lifetime
+
+2016-10-12 11:57  reyk
+
+	* sbin/iked/log.c: copy updated log.c from vmd: for correctness,
+	  save errno when doing additional actions before printing it.	OK
+	  rzalamena@
+
+2016-09-26 16:55  jca
+
+	* sbin/iked/util.c: Pass the flags argument of recvfromto down to
+	  the underlying recvmsg
+
+	  Doesn't matter in iked as recvfromto is only called with flags =
+	  0, but this code tends to be copied.	ok sthen@ florian@
+
+2016-09-17 20:36  benno
+
+	* sbin/iked/parse.y: During parsing of the iked(8) configuration, a
+	  variable is set to 0 by mistake, disabling Pre-Shared key
+	  authentication.  MFC v 1.57 sbin/iked/parse.y from pascal@ ok
+	  florian@ pascal@ tj@
+
+2016-09-15 03:37  dlg
+
+	* sys/netinet/ip_ipsp.h: move from RB macros to RBT functions
+
+	  shaves a bunch of bytes off kernels
+
+2016-09-13 10:49  mikeb
+
+	* sbin/iked/timer.c: Disable the timer event before attempting to
+	  change it
+
+	  Report and fix by Nikolay Edigaryev <edigaryev at gmail ! com>,
+	  thanks!  OK reyk@
+
+2016-09-11 14:31  natano
+
+	* usr.sbin/ikectl/Makefile: Files in /etc/ssl belong to root. ok
+	  deraadt
+
+2016-09-04 16:55  reyk
+
+	* sbin/iked/: control.c, iked.c: Forward IMSG_CTL_VERBOSE via the
+	  parent; this fixes a crash when doing "ikectl log verbose" and
+	  keeps the control process separated from the cert process.
+
+	  Thanks for the bug report to Wouter Clarie
+
+	  OK vgross@
+
+2016-09-04 10:26  vgross
+
+	* sbin/iked/: iked.h, ikev2_msg.c, util.c: Now that we have
+	  IP_SENDSRCADDR, add sendtofrom().
+
+	  Ok jca@ and reyk@
+
+2016-09-03 09:20  vgross
+
+	* sbin/iked/: iked.h, parse.y, pfkey.c: Add the missing bits to
+	  have NAT on enc(4) support in iked.
+
+	  Ok mikeb@
+
+2016-08-06 07:08  pascal
+
+	* sbin/iked/parse.y: Unbreak PSK authentication, broken by
+	  previous.
+
+	  ok reyk@ florian@
+
+2016-07-20 12:31  reyk
+
+	* sbin/iked/parse.y: When parsing the configuration. initialize the
+	  auth structure correctly, as parse.y's $$ is not
+	  zero-initialized.
+
+	  Found by Rene Ammerlaan
+
+	  OK markus@ florian@
+
+2016-06-21 21:35  benno
+
+	* sbin/iked/parse.y: do not allow whitespace in macro names, i.e.
+	  "this is" = "a variable".  change this in all config parsers in
+	  our tree that support macros.  problem reported by sven falempin.
+
+	  feedback from henning@, stsp@, deraadt@ ok florian@ mikeb@
+
+2016-06-14 13:45  reyk
+
+	* usr.sbin/ikectl/parser.c: Remove unused variable, found by clang
+
+2016-06-02 07:14  patrick
+
+	* sbin/iked/ikev2.c: Use the last 32-bits of the IPv6 address to
+	  dynamically assign addresses from the pool, instead of the fourth
+	  byte, which usually represents network bits.
+
+	  ok markus@ mikeb@
+
+2016-06-01 11:16  patrick
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, policy.c: Implement a
+	  second address pool specifically for IPv6, so that clients can be
+	  given an IPv4 and IPv6 address at the same time, thus enabling
+	  dual stack usage.
+
+	  ok markus@ mikeb@
+
+2016-06-01 10:52  patrick
+
+	* sbin/iked/ikev2.c: ikev2_cp_fixaddr() is called to replace
+	  unspecified (e.g. 0.0.0.0) addresses by specified (e.g.
+	  192.0.2.1) ones.  The function should return if the address is
+	  already set.	The check was wrong for the IPv6 case, as it
+	  returned if it's not set.  This caused the address to never be
+	  fixed.
+
+	  ok markus@ mikeb@
+
+2016-03-07 19:33  mmcc
+
+	* sbin/iked/pfkey.c: http -> https for IETF/IANA URLs in comments
+
+2016-03-01 13:54  gsoares
+
+	* usr.sbin/ikectl/Makefile: add LIBCRYPTO to DPADD
+
+	  OK deraadt@ mikeb@
+
+2016-01-27 20:20  gsoares
+
+	* sbin/iked/types.h: fyx typo. s,dynanic,dynamic, OK reyk
+
+2015-12-10 17:23  mmcc
+
+	* sbin/iked/pfkey.c: comment typo
+
+2015-12-09 21:41  naddy
+
+	* sbin/iked/iked.conf.5, sbin/iked/parse.y, sbin/iked/pfkey.c,
+	  sys/net/pfkeyv2.h: Remove plain DES encryption from IPsec.
+
+	  DES is insecure since brute force attacks are practical due to
+	  its short key length.
+
+	  This removes support for DES-CBC encryption in ESP and in IKE
+	  main and quick mode from the kernel, isakmpd(8), ipsecctl(8), and
+	  iked(8).
+
+	  ok mikeb@
+
+2015-12-07 16:05  reyk
+
+	* sbin/iked/proc.c: Add imsg "peerid" to debug messages (only
+	  within -DDEBUG).
+
+2015-12-07 12:46  reyk
+
+	* sbin/iked/: ca.c, config.c, iked.c, iked.h, ocsp.c, proc.c: Sync
+	  proc.c, use shorter proc_compose[v]()
+
+2015-12-07 12:13  reyk
+
+	* sbin/iked/log.c: sync with vmd
+
+2015-12-05 13:09  claudio
+
+	* sbin/iked/control.c, sbin/iked/proc.c, usr.sbin/ikectl/ikectl.c:
+	  EAGAIN handling for imsg_read. OK henning@ benno@
+
+2015-12-03 13:12  tedu
+
+	* sys/netinet/ip_ipsp.h: remove some unused defines. ok mikeb
+
+2015-12-02 12:43  naddy
+
+	* sbin/iked/pfkey.c, sys/net/pfkeyv2.h: remove unimplemented PF_KEY
+	  algorithms; ok sthen@ mpi@ mikeb@
+
+2015-11-23 19:28  reyk
+
+	* sbin/iked/: control.c, iked.h, ocsp.c, proc.c, types.h, util.c:
+	  Replace socket_set_blockmode() and fcntl(fd, F_SETFL, O_NONBLOCK)
+	  calls with the SOCK_NONBLOCK flag to socket() and accept4().
+
+	  OK claudio@ jung@
+
+2015-11-22 13:27  reyk
+
+	* sbin/iked/: iked.c, iked.h, log.c, proc.c: Update log.c: change
+	  fatal() and fatalx() into variadic functions, include the process
+	  name, and replace all calls of fatal*(NULL) with fatal(__func__)
+	  for better debugging.
+
+	  OK benno@
+
+2015-11-21 13:46  reyk
+
+	* sbin/iked/log.c: Once again, fix the license text.  After many
+	  years, we just cannot get rid of the "LOSS OF MIND" joke.  Haha.
+	  We keep on removing it and it shows up again because it
+	  accidentally gets synced from somewhere else.  bgpd and ospfd
+	  don't have it anymore, but their offsprings still carry it. If
+	  you see it, remove it, and, in the OpenBSD ISC case, use the
+	  original text from /usr/share/misc/license.template.	All authors
+	  agree.
+
+2015-11-21 12:59  reyk
+
+	* sbin/iked/: iked.h, log.c, util.c: Move local logging functions
+	  to util.c (which is shared with ikectl), sync log.c with relayd
+	  and httpd - all three daemons are using a copy of the same file
+	  now.	Nevertheless, adding "extern int debug/verbose" in util.c
+	  is not super nice but helps for now.	No functional change.
+
+2015-11-19 21:32  mmcc
+
+	* sbin/iked/util.c: Simplify all instances of get_string() and
+	  get_data() using malloc() and strndup().
+
+	  ok millert@
+
+2015-11-18 16:46  reyk
+
+	* sbin/iked/config.c: pledge exposed a simple bug: the unprivileged
+	  child tried to print the policy after receiving it from the
+	  parent.  print_policy -> print_proto -> getprotobynumber ->
+	  pledge abort because it tried to access /etc/protocols without
+	  rpath.  It was just a debugging message that can be moved to the
+	  parent (printing the policy on the sender side and not the
+	  receiver side).  The parent has rpath and dns.
+
+	  Issue found by sthen@ with "proto etherip" OK sthen@ benno@
+
+2015-11-10 04:33  jsg
+
+	* usr.sbin/ikectl/Makefile: With ikectl now requiring ca specific
+	  sections not present in the general openssl cnf files install the
+	  ikeca.cnf file.
+
+	  ok sthen@ requested by reyk@
+
+2015-11-06 06:29  jsg
+
+	* usr.sbin/ikectl/ikectl.c: Use pledge in ikectl.  For now one
+	  request for sending imsgs to iked another request for the ca
+	  portion.
+
+	  ok deraadt@
+
+2015-11-04 12:40  mikeb
+
+	* sbin/iked/: iked.conf.5, parse.y, pfkey.c: Support
+	  Chacha20-Poly1305 for Child SAs;  ok reyk
+
+2015-11-03 01:50  mikeb
+
+	* sys/net/pfkeyv2.h: Plumb Chacha20-Poly1305 into the IPsec/ESP and
+	  PF_KEY frameworks
+
+	  ok naddy
+
+2015-11-02 12:21  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikeca.cnf: switch from using sha1 to
+	  sha256
+
+	  As the ca section of the cnf file requires a default_md line
+	  (unlike req) this change also requires updating the installed
+	  ikeca.cnf or equivalent files.
+
+	  Requested by and ok reyk@ who also tested this against ios9 with
+	  iked.
+
+2015-11-02 12:01  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikeca.cnf: sign csrs with openssl ca
+	  instead of x509 -req
+
+	  This way openssl will add valid signed certs to the index file
+	  which is required to use the builtin openssl OCSP server.
+
+	  This change requires installing a new ikeca.cnf or updating the
+	  default cnf files with equivalent sections.
+
+	  Requested by and ok reyk@
+
+2015-11-02 10:27  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.8, ikectl.c, parser.c,
+	  parser.h: Accept an ocsp option when creating certificates to set
+	  the extended key usage for OCSP signing.
+
+	  Requested by and ok reyk@
+
+2015-11-01 21:26  jmc
+
+	* sbin/iked/iked.conf.5: replace "can not" with "cannot";
+
+2015-10-31 20:06  naddy
+
+	* sbin/iked/iked.conf.5: pasto
+
+2015-10-31 19:28  naddy
+
+	* sbin/iked/: crypto.c, ikev2.h, parse.y: RFC4754 specifies
+	  ECDSA-521 (sic), not -512.  ok reyk@
+
+2015-10-23 09:13  tedu
+
+	* sbin/iked/Makefile: push LDSTATIC line down so it's not
+	  overridden by makefile.inc. ok reyk
+
+2015-10-22 15:55  reyk
+
+	* sbin/iked/: ca.c, control.c, iked.c, iked.h, ikev2.c, proc.c,
+	  types.h: iked hereby pledges that it will run with restricted
+	  system operations.  This adds pledge(2) too all processes,
+	  including the iked parent process; the existing privsep design
+	  has been improved for better pledgeability.  There haven't been
+	  any serious problems as it was already sane (eg. by receiving the
+	  PFKEYv2 and UDP sockets via fd passing).  The control socket
+	  moved to an independent process to remove some abilities from the
+	  cert process.
+
+	  Committed in agreement with many but nobody was brave enough to
+	  OK it.
+
+	  Better testing will happen with having it in the tree.  "It's the
+	  truth" deraadt@ "Let's see what happens" benno@
+
+2015-10-22 15:14  reyk
+
+	* sbin/iked/Makefile: Stop linking iked -static: It was inherited
+	  from isakmpd that is -static for NFS-over-IPsec that might mount
+	  the libraries after /usr.  The benefit of linking iked dynamic
+	  outweighs the historic reason, eg.  to get full address space
+	  randomization and to benefit from libcrypto updates, so we turn
+	  it into a dynamic binary.
+
+	  OK deraadt@ naddy@
+
+2015-10-20 06:42  reyk
+
+	* sbin/iked/policy.c: Fix ocsp by adding a missing TAILQ_INIT().
+
+	  Confirmed by markus@ with an identical diff
+
+2015-10-19 21:32  naddy
+
+	* sbin/iked/iked.conf.5: break long lines in examples; ok jmc@
+
+2015-10-19 11:27  reyk
+
+	* sbin/iked/control.c: Fix control_imsg_forward() by changing
+	  imsg_compose() to imsg_compose_event().  This was done by pyr@ in
+	  relayd/control.c -r1.32 (2009/06/05, ok eric@) but somehow didn't
+	  slip into other daemons that imported control.c.
+
+2015-10-19 11:25  reyk
+
+	* sbin/iked/: Makefile, ca.c, config.c, control.c, iked.c, iked.h,
+	  ikev1.c, ikev2.c, ikev2_msg.c, types.h: Remove the ikev1 stub -
+	  Since I started iked, it has an empty privsep process for
+	  ISAKMP+IKEv1.  I kept it to let somebody either contribute the
+	  old protocol one day, I never intended to implement IKEv1 myself,
+	  or to add a new kind of pipe to isakmpd to hand off IKEv1
+	  messages.  As IKEv2 is widely supported by all major OS and
+	  networking vendors now, I'm happy to scrap the idea of supporting
+	  ISAKMP+IKEv1.  It is still possible to use isakmpd for legacy
+	  VPNs.
+
+	  OK mikeb@
+
+2015-10-15 18:40  mmcc
+
+	* sbin/iked/: config.c, iked.c, ikev2.c, ikev2_msg.c, ikev2_pld.c,
+	  pfkey.c: Remove some unnecessary NULL-checks before free().
+	  Change two bzero() calls on pf data to explicit_bzero().
+
+	  ok mikeb@
+
+2015-10-02 22:14  reyk
+
+	* sbin/iked/ikev2.h: Curve25519 is now specified in
+	  draft-ietf-ipsecme-safecurves-00 (along with Curve448).  And we
+	  already support it.  Mention it here to update the Id when it was
+	  assigned by IANA.
+
+2015-10-02 17:50  reyk
+
+	* sbin/iked/ikev2.h: RFC7634 specifies ChaCha20-Poly1305 for IKEv2
+	  and IPsec and IANA assigned an official ID 28 for it.  This is
+	  good news, and we should really support it as well.  Just add the
+	  ID for now.
+
+	  Discussed with mikeb@
+
+2015-10-02 16:56  reyk
+
+	* sbin/iked/parse.y: Remove MD5 from the default proposals.  At
+	  least SHA1 seems to be the minimum out there.  Even El Capitan
+	  announces 3DES and SHA1 instead of MD5.
+
+	  OK mikeb@
+
+2015-10-02 16:13  reyk
+
+	* sbin/iked/ikev2.c: If the policy certreqtype is 0, use the global
+	  one instead.	This fixes EAP (user-based auth) with IKEv2 in El
+	  Capitan.
+
+	  OK mikeb@
+
+2015-10-01 13:57  sthen
+
+	* sbin/iked/ikev2_pld.c: Don't reject an "empty" CERTREQ (one with
+	  no CA hashes), instead treat it as if no CERTREQ were received.
+	  In conjunction with the previous iOS9 interop fix, this may fix
+	  an interop problem seen by Denis Lapshin with BlackBerry OS
+	  10.3.1 and one of a number with firebrick.co.uk's IKEv2
+	  implementation diagnosed by their developer Cliff Hones.  ok
+	  reyk@
+
+2015-10-01 10:59  reyk
+
+	* sbin/iked/: ca.c, iked.h, ikev2.c, ikev2_pld.c, policy.c: Fix
+	  interoperability with Apple iOS9: If we don't get a (valid)
+	  CERTREQ but a CERT, respond with a local CERT that was selected
+	  based on our own policy instead of leaving it out.  This seems to
+	  be valid with the RFC that makes the CERTREQ optional and allows
+	  to ignore it or to apply an own policy.
+
+	  OK mikeb@ sthen@
+
+2015-09-07 15:24  sobrado
+
+	* usr.sbin/ikectl/ikectl.8: append a slash immediately after a file
+	  system path that is a directory; uppercase the description of
+	  /var/run/iked.sock (found by jmc@); add missing full stop.
+
+	  ok jmc@
+
+2015-08-26 02:09  jsg
+
+	* sbin/iked/pfkey.c: use 0xffff not 0xfffff for a 16 bit port
+	  constant ok mikeb@
+
+2015-08-25 11:50  deraadt
+
+	* sys/netinet/ip_ipsp.h: correct #if/#endif guard comment
+
+2015-08-21 11:59  reyk
+
+	* sbin/iked/: ca.c, chap_ms.c, chap_ms.h, config.c, crypto.c, dh.c,
+	  dh.h, eap.c, eap.h, iked.c, iked.h, ikev1.c, ikev2.c, ikev2.h,
+	  ikev2_msg.c, ikev2_pld.c, imsg_util.c, ocsp.c, parse.y, pfkey.c,
+	  policy.c, proc.c, types.h, util.c: Switch iked to C99-style
+	  fixed-width integer types.
+
+	  OK mikeb@
+
+2015-08-19 21:07  reyk
+
+	* usr.sbin/ikectl/ikeca.c: ca_hier() und ca_newpass() abort on
+	  failure, return void instead of int.
+
+	  Based on previous observation by semarie@
+
+2015-08-19 21:03  reyk
+
+	* usr.sbin/ikectl/ikeca.c: spacing
+
+2015-08-19 21:01  reyk
+
+	* usr.sbin/ikectl/ikeca.c: fcopy_env() should return void as it
+	  aborts on failure.
+
+	  Pointed out by semarie@
+
+2015-08-19 19:31  reyk
+
+	* sbin/iked/ocsp.c: Add missing OpenBSD CVS tag - no binary change
+
+2015-08-19 14:12  reyk
+
+	* sbin/iked/: crypto.c, dh.h, iked.h, ikev2.c, ikev2_pld.c,
+	  parse.y, policy.c, types.h: spacing (no binary change, verified
+	  with checksums)
+
+2015-08-19 13:30  reyk
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.c, parser.c: Use C99 integer
+	  types in ikectl(8).
+
+	  OK jsg@
+
+2015-08-19 12:25  reyk
+
+	* usr.sbin/ikectl/: Makefile, ikeca.c: Support for overwriting
+	  $ENV:: variables in OpenSSL .cnf files from the environment has
+	  been removed in LibreSSL.  This was a good step but it
+	  unintentionally broke the "ikectl ca" commands.  Rework the
+	  implementation for copying the .cnf files and expanding the
+	  $ENV:: variables ourselves before passing the generated .cnf file
+	  to the "openssl" command.
+
+	  Reported and tested by Jona Joachim (thanks!) OK jsg@
+
+2015-08-15 04:47  semarie
+
+	* usr.sbin/ikectl/ikeca.c: correct mode_t 644 to 0644
+
+	  ok sthen@
+
+2015-08-15 04:45  semarie
+
+	* usr.sbin/ikectl/ikeca.c: corrects three err() to errx() calls   -
+	  a if condition don't set errno   - strlcpy(3) don't set errno (no
+	  mention is man page)	 - ca_readpass() already manage errno error
+	  message with warn(3)
+
+	  ok sthen@
+
+2015-07-27 17:28  sobrado
+
+	* usr.sbin/ikectl/ikectl.8: use file system path (.Pa) semantic
+	  markup macros where appropriate.
+
+	  ok jmc@
+
+2015-07-17 18:31  blambert
+
+	* sys/netinet/ip_ipsp.h: manage spd entries by using the radix api
+	  directly instead of reaching around through the routing table
+
+	  original diff by myself, much improved by mikeb@ and mpi@
+
+	  ok and testing mikeb@ mpi@
+
+2015-07-17 14:48  mikeb
+
+	* sbin/iked/pfkey.c: Assign correct destination port value for the
+	  destination netmask.
+
+	  This repairs setup of SPD flows that specify port only on the one
+	  side of the from-to specification.
+
+	  ok markus
+
+2015-07-14 13:06  jmc
+
+	* sbin/iked/iked.conf.5: clarification from trondd; ok mikeb
+
+2015-07-07 19:13  markus
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, policy.c: repair
+	  policy-ikesa-linking by replacing the broken RB_TREE w/TAILQ
+	  (e.g. the policy might be used-after-free on 'ikectl reconfig')
+	  ok mikeb@
+
+2015-07-03 17:46  mikeb
+
+	* sbin/iked/parse.y: Terminate 'config' keyword array with a NULL
+	  element.  Reported by trondd at kagu-tsuchi ! com, thanks!
+
+2015-06-11 18:49  reyk
+
+	* sbin/iked/chap_ms.h, sbin/iked/dh.h, sbin/iked/eap.h,
+	  sbin/iked/iked.h, sbin/iked/ikev2.h, sbin/iked/types.h,
+	  usr.sbin/ikectl/parser.h: Use "compliant" header guards by
+	  avoiding the reserved '_' namespace.
+
+	  Pointed out by Markus Elfring
+
+	  OK mikeb@ millert@
+
+2015-06-05 13:35  vgross
+
+	* sbin/iked/pfkey.c: Fix coupling and decoupling operations.
+
+	  With help and ok from mikeb@
+
+2015-06-03 02:24  millert
+
+	* sbin/iked/: iked.c, parse.y: Do not assume that asprintf() clears
+	  the pointer on failure, which is non-portable.  Also add missing
+	  asprintf() return value checks.  OK deraadt@ guenther@ doug@
+
+2015-05-23 12:38  markus
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: introduce ipsec-id
+	  bundles and use them for ipsecflowinfo, fixes rekeying for
+	  l2tp/ipsec against multiple windows clients and saves memory (for
+	  many SAs to same peers); feedback and ok mikeb@
+
+2015-04-17 11:04  mikeb
+
+	* sys/netinet/ip_ipsp.h: Stubs and support code for NIC-enabled
+	  IPsec bite the dust.	No objection from reyk@, OK markus,
+	  hshoexer
+
+2015-04-17 10:04  mikeb
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Remove unsupported
+	  SADB_X_IDENTTYPE_CONNECTION;	OK markus, hshoexer
+
+2015-04-16 19:44  markus
+
+	* sys/netinet/ip_ipsp.h: ipa_inp_next is unused; via mikeb@
+
+2015-04-16 19:24  markus
+
+	* sys/netinet/ip_ipsp.h: remove unfinished/unused support for
+	  socket-attached ipsec-policies ok mikeb
+
+2015-04-16 19:18  markus
+
+	* sys/net/pfkeyv2.h: change {import,export}_identity so it can be
+	  used for policies; ok mikeb (fixes sadb_ident_type conversion for
+	  policies)
+
+2015-04-14 14:20  mikeb
+
+	* sys/netinet/ip_ipsp.h: make ipsp_address thread safe;  ok mpi
+
+2015-04-14 12:22  mikeb
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Remove support for
+	  storing credentials and auth information in the kernel.
+
+	  This code is largely unfinished and is not used for anything.
+	  The change leaves identities as only objects referenced by
+	  ipsec_ref structure and their handling requires some changes to
+	  support more advanced matching of IPsec connections.
+
+	  No objections from reyk and hshoexer, with and OK markus.
+
+2015-04-13 16:48  mikeb
+
+	* sys/netinet/ip_ipsp.h: Rename gettdbbyaddr to gettdbbydst;  OK
+	  markus, hshoexer, mpi
+
+2015-04-13 16:45  mikeb
+
+	* sys/netinet/ip_ipsp.h: Remove unused arguments from gettdb*
+	  functions;  OK markus, hshoexer, mpi
+
+2015-03-26 19:52  markus
+
+	* sbin/iked/: ca.c, crypto.c, iked.h, ikev2.c, ikev2.h,
+	  ikev2_msg.c, ikev2_pld.c: initial support for RFC 7427
+	  signatures, so we are no longer restricted to SHA1 for RSA
+	  signatures. ok mikeb@
+
+2015-03-26 12:21  mikeb
+
+	* sys/netinet/ip_ipsp.h: Remove bits of unfinished IPsec proxy
+	  support.  DNS' KX records, anyone? ok markus, hshoexer
+
+2015-02-28 21:51  bentley
+
+	* sbin/iked/iked.conf.5, usr.sbin/ikectl/ikectl.8: Reduce usage of
+	  predefined strings in manpages.
+
+	  Predefined strings are not very portable across troff
+	  implementations, and they make the source much harder to read.
+	  Usually the intended character can be written directly.
+
+	  No output changes, except for two instances where the incorrect
+	  escape was used in the first place.
+
+	  tweaks + ok schwarze@
+
+2015-02-15 01:56  tedu
+
+	* sbin/iked/ikev2_msg.c: convert bcmp to memcmp ok doug millert
+	  miod
+
+2015-02-08 04:50  reyk
+
+	* sbin/iked/parse.y: Use AI_ADDRCONFIG when resolv hosts on
+	  startup.
+
+	  OK henning@
+
+2015-02-06 10:39  deraadt
+
+	* sbin/iked/: ca.c, config.c, eap.c, ikev1.c, ikev2.c, ikev2_msg.c,
+	  ikev2_pld.c: unneeded getopt.h
+
+2015-01-19 18:36  deraadt
+
+	* sys/netinet/ip_ipsp.h: mikeb points out that 'struct
+	  ipsec_policy' can also be hidden by _KERNEL
+
+2015-01-19 16:49  deraadt
+
+	* sys/netinet/ip_ipsp.h: First step of hiding many kernel-only
+	  parts of <netinet/ip_ipsp.h> under _KERNEL, and adjust the one
+	  consumer (netstat) so that it requests the exposure.	Will take a
+	  few more rounds to get this right.  ok mikeb
+
+2015-01-19 14:42  mikeb
+
+	* sbin/iked/: eap.c, ikev2_msg.c, ikev2_pld.c, parse.y: Remove
+	  unnecessary <netinet/ip_ipsp.h> includes
+
+2015-01-16 06:39  deraadt
+
+	* sbin/iked/ca.c, sbin/iked/config.c, sbin/iked/control.c,
+	  sbin/iked/crypto.c, sbin/iked/dh.c, sbin/iked/eap.c,
+	  sbin/iked/genmap.sh, sbin/iked/iked.c, sbin/iked/iked.h,
+	  sbin/iked/ikev1.c, sbin/iked/ikev2.c, sbin/iked/ikev2_msg.c,
+	  sbin/iked/ikev2_pld.c, sbin/iked/log.c, sbin/iked/ocsp.c,
+	  sbin/iked/parse.y, sbin/iked/pfkey.c, sbin/iked/policy.c,
+	  sbin/iked/proc.c, sbin/iked/timer.c, sbin/iked/util.c,
+	  usr.sbin/ikectl/ikeca.c, usr.sbin/ikectl/ikectl.c,
+	  usr.sbin/ikectl/parser.c: Replace <sys/param.h> with <limits.h>
+	  and other less dirty headers where possible.	Annotate
+	  <sys/param.h> lines with their current reasons.  Switch to
+	  PATH_MAX, NGROUPS_MAX, HOST_NAME_MAX+1, LOGIN_NAME_MAX, etc.
+	  Change MIN() and MAX() to local definitions of MINIMUM() and
+	  MAXIMUM() where sensible to avoid pulling in the pollution.
+	  These are the files confirmed through binary verification.  ok
+	  guenther, millert, doug (helped with the verification protocol)
+
+2015-01-15 11:54  sobrado
+
+	* sbin/iked/iked.conf.5: tell the truth about DES.
+
+	  joint work with djm@ and jsing@
+
+	  ok djm@
+
+2015-01-12 11:24  mikeb
+
+	* sbin/iked/parse.y: Don't forget about protocol specification when
+	  configuring flows.
+
+	  Tested by and OK claudio.
+
+2015-01-02 18:28  sobrado
+
+	* sbin/iked/iked.conf.5: PFS stands for Perfect Forward Secrecy.
+
+	  ok reyk@
+
+2014-12-28 10:02  tedu
+
+	* sys/net/pfkeyv2.h: remove KPDK. not really used, and a bad choice
+	  anyway. ok naddy
+
+2014-12-23 03:24  tedu
+
+	* sys/netinet/ip_ipsp.h: unifdef some more INET. v4 4life.
+
+2014-12-16 03:35  millert
+
+	* sbin/iked/proc.c: Replace setpgrp(0, getpid()) with setpgid(0,
+	  0).  OK deraadt@ tedu@
+
+2014-12-05 13:40  mikeb
+
+	* sbin/iked/ikev2.c: Store return value of i2d_X509_NAME in a
+	  signed integer to make sure the negative error gets treated
+	  correctly and doesn't get accidentally promoted to a huge
+	  unsigned value.
+
+	  From Pedro Martelletto, thanks!  OK reyk
+
+2014-12-05 07:24  mikeb
+
+	* sbin/iked/ca.c: Specify correct number of iovecs when sending
+	  replies to the ikev2 proc
+
+	  Crash reported and fix tested by Vincent Gross <dermiste at kilob
+	  ! yt>; patch from Pedro Martelletto, thanks!
+
+2014-12-03 23:18  deraadt
+
+	* sbin/iked/config.c: Init SPI using arc4random_buf, rather than (r
+	  << 32) | r ok matthew
+
+2014-11-25 13:10  mpi
+
+	* sys/netinet/ip_ipsp.h: The proliferation of "struct route" in all
+	  its flavors didn't make any good to our network stack.
+
+	  The most visible effect is the maze of #ifdef's and casts.  But
+	  the real problem is the very fragile way of checking if a
+	  (cached) route entry is still valid or not.  What should we do if
+	  the route jumped to another ifaddr or if its gateway has been
+	  changed?
+
+	  This change start the dance of "struct route" & friends removal
+	  by sending the completly useless "struct route_enc" to the
+	  bucket.
+
+	  Tweak & ok claudio@
+
+2014-11-22 18:15  deraadt
+
+	* usr.sbin/ikectl/ikeca.cnf: /dev/random has created the same
+	  effect as /dev/arandom (and /dev/urandom) for quite some time.
+	  Mop up the last few, by using /dev/random where we actually want
+	  it, or not even mentioning arandom where it is irrelevant.
+
+2014-11-20 05:51  jsg
+
+	* sbin/iked/parse.y: Don't allow embedded nul characters in
+	  strings.  Fixes a pfctl crash with an anchor name containing an
+	  embedded nul found with the afl fuzzer.
+
+	  pfctl parse.y patch from and ok deraadt@
+
+2014-11-20 03:48  tedu
+
+	* sbin/iked/: chap_ms.c, chap_ms.h: remove nt and lanman functions
+	  which aren't used. ok reyk yasuoka
+
+2014-11-14 03:22  doug
+
+	* sbin/iked/parse.y: Add gcc printf format attributes to iked's
+	  parse.y and remove unused yywarn() definition.
+
+	  ok bluhm@
+
+2014-11-10 13:57  jmc
+
+	* sbin/iked/iked.8: tweak previous; ok mikeb plus a macro fix while
+	  here...
+
+2014-11-10 12:59  mikeb
+
+	* sbin/iked/iked.8: copy pubkey section from isakmpd(8);  ok reyk
+
+2014-11-07 14:12  mikeb
+
+	* sbin/iked/: ikev2.c, policy.c: Fixup a few problems with EAP
+	  state transition
+
+	  First of all we don't need to satisfy valid EAP state flags for
+	  IKEV2_STATE_EAP as it's an initial EAP exchange state.  Then when
+	  waiting for the "ca" process to construct our AUTH payload we
+	  need to bail while sa_localauth is not available.  With this
+	  change Win7 is able to establish the the tunnel again.
+
+	  ok markus
+
+2014-11-07 14:05  mikeb
+
+	* sbin/iked/ikev2_pld.c: Run eap_parse on the actual message and
+	  only when the length is right
+
+2014-11-07 14:02  mikeb
+
+	* sbin/iked/: ikev2.c, ikev2.h, ikev2_msg.c: Repair initiator with
+	  PSK auth
+
+	  Attempt state transition to VALID (or EAP_VALID) in the
+	  ikev2_ike_auth after we have completed authentication
+	  synchronously (PSK) or asynchronously (X.509 and RSA) eliminating
+	  the need to do so in multiple places and restoring the correct
+	  order for PSK.
+
+	  ok markus
+
+2014-10-29 06:26  deraadt
+
+	* sbin/iked/pfkey.c: convert simple cases of select() to poll() ok
+	  doug
+
+2014-10-25 03:18  lteo
+
+	* sbin/iked/proc.c: Remove unnecessary netinet/in_systm.h include.
+
+	  ok millert@
+
+2014-10-18 03:11  doug
+
+	* sbin/iked/pfkey.c: Simple malloc() to reallocarray() conversion
+	  to potentially avoid integer overflow.
+
+	  ok deraadt@
+
+2014-10-12 15:57  jsg
+
+	* sbin/iked/dh.c: DH_compute_key() returns -1 on error but this was
+	  not handled by testing the result with a negation.
+
+	  Ralf Horstmann discovered iked would segfault when connecting
+	  from Strongswan on Android because of this and supplied the patch
+	  to fix the problem.
+
+	  ok reyk@
+
+2014-10-08 05:47  deraadt
+
+	* sbin/iked/config.c: trivial use of reallocarray()
+
+2014-08-27 10:28  reyk
+
+	* sbin/iked/: Makefile, dh.c, dh.h, iked.conf.5, ikev2.h, parse.y,
+	  smult_curve25519_ref.c: Add support for Curve25519 using the
+	  public domain code that is found in OpenSSH.	The "private use"
+	  DH group 1034 is based on the value that was picked by strongswan
+	  recently.
+
+	  OK mikeb@ markus@
+
+2014-08-26 17:47  jsing
+
+	* usr.sbin/ikectl/ikeca.c: Move openssl(1) from /usr/sbin/openssl
+	  to /usr/bin/openssl, since it is not a system/superuser binary.
+	  At the same time, move the source code from its current
+	  lib/libssl/src/apps location to a more appropriate home under
+	  usr.bin/openssl.
+
+	  ok deraadt@ miod@
+
+2014-08-25 14:36  reyk
+
+	* sbin/iked/: dh.c, iked.conf.5, parse.y: Add support for DH groups
+	  27-30 using the Brainpool curves which have previously been added
+	  to LibreSSL's libcrypto.
+
+	  ok markus@ mikeb@
+
+2014-08-25 07:50  doug
+
+	* sbin/iked/ikev2_msg.c, usr.sbin/ikectl/ikeca.c: Delete secret or
+	  secret-derived data with explicit_bzero.
+
+	  concept ok deraadt@ diff looks ok tedu@
+
+2014-08-18 09:43  reyk
+
+	* sbin/iked/: iked.c, iked.h, proc.c: Sync proc.c with httpd.
+	  httpd needs SIGUSR1 but iked will ignore it now instead of
+	  terminating the process.
+
+	  ok mikeb@
+
+2014-08-05 16:34  reyk
+
+	* sbin/iked/iked.conf.5: Fix an example, nat-to requires to specify
+	  the "out" direction in pf rules.
+
+	  From "Vigdis" via misc@ can go in deraadt@
+
+2014-07-20 01:38  guenther
+
+	* usr.sbin/ikectl/ikeca.c: Make sure the correct errno is reported
+	  by warn* or err* and not the errno of an intervening cleanup
+	  operation like close/unlink/etc.
+
+	  Diff from Doug Hogan (doug (at) acyclic.org)
+
+2014-07-12 14:15  reyk
+
+	* sbin/iked/proc.c: Sync msgbuf_write() changes from relayd.
+
+	  Please note that proc.c should be kept identical in relayd, iked
+	  and snmpd (currently without the includes).
+
+	  ok benno@
+
+2014-07-10 12:50  jsg
+
+	* sbin/iked/: ca.c, crypto.c, dh.c: add additional includes
+	  required to build with -DOPENSSL_NO_DEPRECATED ok reyk@
+
+2014-07-09 12:05  markus
+
+	* sbin/iked/: ikev2.c, pfkey.c: expire IPcomp SAs too; ok mikeb
+	  (some time ago)
+
+2014-06-03 06:25  yasuoka
+
+	* sbin/iked/control.c: Handle the event parameter of libevent
+	  callback function as a bit mask.  Also remove redundant
+	  imsg_event_add calls.  Fixes come from usr.sbin/ospfd/control.c
+
+	  ok reyk
+
+2014-05-13 14:24  markus
+
+	* sbin/iked/ikev2.c: pass SA initiator not the exchange initator to
+	  sa_address(); ok mikeb@
+
+2014-05-09 06:37  markus
+
+	* sbin/iked/: iked.h, ikev2.c, pfkey.c: get rid of redundant
+	  {csa,flow}_{src,dst}id pointers, so we don't need to update it on
+	  rekey (fixes use-after-free); ok mikeb@
+
+2014-05-09 06:29  markus
+
+	* sbin/iked/: iked.h, ikev2.c, pfkey.c: replace iked_transform
+	  pointer with xform id, since target of pointer might be freed
+	  (e.g. on ike sa rekey); ok mikeb@
+
+2014-05-08 13:11  blambert
+
+	* sbin/iked/: iked.c, iked.h, proc.c: match iked proc.c
+	  infrastructure with proc.c
+
+	  ok reyk@
+
+2014-05-07 13:09  markus
+
+	* sbin/iked/pfkey.c: try postponed requests first, so we do
+	  in-order processing; ok mikeb@
+
+2014-05-07 13:04  markus
+
+	* sbin/iked/ikev2_msg.c: print msgid for debugging; ok reyk & mikeb
+
+2014-05-07 12:57  markus
+
+	* sbin/iked/: ca.c, iked.h, ikev2.c: make authentication work with
+	  X509 certificates that don't have a subject-altname, i.e. support
+	  IKEV2_ID_ASN1_DN correctly; feedback & ok mikeb@
+
+2014-05-07 10:52  markus
+
+	* sbin/iked/ikev2.c: factor out ikev2_ike_auth() (state machine;
+	  used multiple times via callbacks) from ikev2_ike_auth_recv()
+	  code (message parsing; used once); ok mikeb@
+
+2014-05-06 14:10  markus
+
+	* sbin/iked/: config.c, iked.h, ikev2.c: change the create-child-sa
+	  responder code, so it does not store any state in the ikesa
+	  structure. this way we can initiate a create-child-sa and process
+	  requests for the peer at the same time. ok mikeb@
+
+2014-05-06 13:09  jmc
+
+	* sbin/iked/iked.conf.5: zap stray word; ok markus
+
+2014-05-06 11:11  reyk
+
+	* sbin/iked/imsg_util.c: Explicitly zero out the ibufs before
+	  releasing the memory to make sure that included crypto parameters
+	  are cleaned.
+
+	  ok mikeb@ markus@
+
+2014-05-06 10:24  markus
+
+	* sbin/iked/: config.c, iked.conf.5, iked.h, ikev2.c, ikev2.h,
+	  ikev2_msg.c, ikev2_pld.c, parse.y, pfkey.c, policy.c: initiate
+	  ike sa rekeying (ikesalifetime keyword), re-queue pfkey events
+	  while we are busy initiating child-SAs; ok mikeb@
+
+2014-05-06 09:48  markus
+
+	* sbin/iked/: config.c, ikev2.c, policy.c: cleanup IKE-SA tree
+	  handling (fixes repeated-insert & double-remove)
+
+	  sa_new() always re-inserts an SA into the SA tree. in case of a
+	  key collision it would try to free the new SA. While doing that
+	  it would accidentially free the existing SA, since
+	  config_free_sa() does RB_REMOVE() uncoditionally.  This change
+	  fixes this by: a) moving the responsibility for RB_REMOVE() to
+	  CALLER of config_free_sa() and b) by calling config_free_sa()
+	  instead of sa_free() from sa_new() It also changes to code to
+	  NEVER re-add an SA to the tree. So RB_INSERT() is ONLY called
+	  once per SA. The code also makes sure that there is always a KEY
+	  defined for this tree (ispi).
+
+	  ok mikeb@
+
+2014-05-06 09:21  markus
+
+	* sbin/iked/ikev2_pld.c: don't sa_free() in the receive path
+	  (prevents use-after-free); ok mikeb@
+
+2014-05-06 08:17  markus
+
+	* sbin/iked/ikev2.c: send the delete with the locally allocated SPI
+	  in ikev2_init_create_child_sa()
+
+2014-05-06 07:45  markus
+
+	* sbin/iked/ikev2_pld.c: make sure some notify payloads are
+	  encrypted; ok mikeb@
+
+2014-05-06 07:24  markus
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, ikev2_pld.c: initial
+	  support for PFS; ok reyk@
+
+2014-05-06 07:08  markus
+
+	* sbin/iked/: iked.h, ikev2.c: retire IKED_REQ_DELETE and fix
+	  delete parsing; ok reyk@
+
+2014-05-06 06:40  jsg
+
+	* sbin/iked/proc.c: no need to include rand.h now the RAND_seed()
+	  calls are gone.  ok reyk@
+
+2014-05-05 18:56  markus
+
+	* sbin/iked/ca.c: ca_x509_serialize: don't leak the bio buffer; ok
+	  reyk@
+
+2014-05-05 18:54  markus
+
+	* sbin/iked/ca.c: make the ca_pubkey_serialize() code similar to
+	  the private key code, and fixes a leak of the rsa object in the
+	  error case. from hshoexer@; ok reyk@
+
+2014-05-05 18:50  markus
+
+	* sbin/iked/pfkey.c: pfkey is unreliable, so add a select-timeout
+	  before MSG_PEEK; similar code is in isakmpd; ok reyk@
+
+2014-05-05 16:14  markus
+
+	* sbin/iked/ikev2_msg.c: the caller of
+	  ikev2_msg_retransmit_response already frees the sa; ok mikeb
+
+2014-05-05 16:13  markus
+
+	* sbin/iked/pfkey.c: don't leak on pid mismatch; ok mikeb
+
+2014-05-05 15:21  markus
+
+	* sbin/iked/ikev2_pld.c: validate the attribute length, too; from
+	  hshoexer; ok mikeb
+
+2014-05-05 08:23  blambert
+
+	* sbin/iked/pfkey.c: change surprisingly consistent mispelling of
+	  length ("lenght")
+
+	  no change in md5 of resulting object file
+
+	  ok markus@, reyk@
+
+2014-05-04 10:35  reyk
+
+	* sbin/iked/proc.c: With the recent change by deraadt@ to introduce
+	  kern.nosuidcoredump=3, we don't need the horrible debug hack
+	  anymore that disabled privdrop and chroot to get core dumps of
+	  privsep processes.  No functional change for the normal binary,
+	  only if it is compiled with the non-default -DDEBUG option.
+
+2014-04-29 11:51  markus
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2.h, ikev2_msg.c, policy.c: make
+	  sure the state machine only advances if the AUTH payload has been
+	  verified; with & ok mikeb@
+
+2014-04-28 16:23  jmc
+
+	* sbin/iked/iked.conf.5: macro fixes for previous; ok reyk
+
+2014-04-28 11:19  reyk
+
+	* sbin/iked/: ocsp.c, ikev2.c, ikev2_pld.c: spacing
+
+2014-04-28 11:17  reyk
+
+	* sbin/iked/: iked.8, iked.conf.5: bump copyright
+
+2014-04-28 11:16  reyk
+
+	* sbin/iked/iked.conf.5: Add missing documentation for ipcomp(4)
+	  support and the configuration payloads.
+
+	  ok sthen@ krw@
+
+2014-04-28 11:05  reyk
+
+	* sbin/iked/iked.8: It's about time to remove the infamous CAVEATS
+	  section in iked(8).  Software is never "finished" but the
+	  implementation has matured enough to drop the disclaimer about
+	  using it in production networks.
+
+	  Thanks to markus@, mikeb@ and Hans-Joerg Hoexer for their
+	  significant and ongoing work on improving iked(8).
+
+	  Removal prompted by sthen@ and many others.
+
+2014-04-25 09:41  jsg
+
+	* sbin/iked/pfkey.c: don't access a pointer till after the null
+	  check ok mikeb@
+
+2014-04-22 12:00  reyk
+
+	* sbin/iked/: ca.c, config.c, control.c, iked.c, iked.h, ikev1.c,
+	  ikev2_msg.c, ocsp.c, proc.c: Update iked to use the same proc.c
+	  that relayd uses.  Less differences, less code to audit.
+
+	  ok mikeb@
+
+2014-04-18 21:29  tedu
+
+	* sbin/iked/proc.c, usr.sbin/ikectl/ikeca.c: round up some enemy
+	  sympathizers found calling RAND_seed().  ok beck reyk
+
+2014-04-16 04:59  miod
+
+	* sbin/iked/chap_ms.c: More des_foo -> DES_foo
+
+2014-04-14 07:18  blambert
+
+	* sbin/iked/proc.c: Fix the following idiom in the following way:
+
+		  arc4random_buf(seed, sizeof(seed));
+		  RAND_seed(seed, sizeof(seed));
+	  +	  explicit_bzero(seed, sizeof(seed));
+
+	  ok reyk@
+
+2014-04-10 16:08  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c: Add
+	  validation routines to ikev2_pld.c: For each payload type overall
+	  header structure is checked for sanity before copying the header.
+	   Always pass down the number of remaining bytes in the payload or
+	  substructure so we can always ensure to not go beyond actual
+	  data.  Also remove the quick parsing step as it does not provide
+	  a real benefit anymore.
+
+	  From Hans-Joerg Hoexer
+
+	  ok mikeb@ markus@
+
+2014-03-12 14:28  markus
+
+	* sbin/iked/ikev2.c: don't leak an ibuf for each expired SA; ok
+	  mikeb@
+
+2014-03-12 11:57  markus
+
+	* sbin/iked/ikev2.c: unbreak config-address w/o pool; ok mikeb@
+
+2014-02-26 14:09  markus
+
+	* sbin/iked/ikev2.c: don't policy_ref an activate policy
+	  (policy_ref/unref are assymetrical), otherwise the policy list
+	  might get corrupted; from haesbaert
+
+2014-02-21 20:52  markus
+
+	* sbin/iked/: iked.h, ikev2.c, pfkey.c, policy.c, util.c: support
+	  rekeying for IPCOMP; ok mikeb@
+
+2014-02-18 13:10  markus
+
+	* sbin/iked/ikev2.c: check the error from ikev2_cp_setaddr
+
+2014-02-17 15:53  markus
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, policy.c: interpret
+	  'config address net/prefix' as a pool of addresses and randomly
+	  choose the address for CFG_REQUEST. this address will be used to
+	  replace 0.0.0.0/32 in the specified flow. e.g.
+	  > ikev2 passive esp from 192.168.1.0/24 to 0.0.0.0 \
+	  >	config address 192.168.10.200/24
+	  will assign an address between 192.168.10.200 and 192.168.10.254
+	  and replace 0.0.0.0 with this address.  ok mikeb@ on older
+	  version of this diff.
+
+2014-02-17 15:07  markus
+
+	* sbin/iked/: Makefile, ca.c, config.c, iked.c, iked.conf.5,
+	  iked.h, ocsp.c, parse.y, types.h: basic OCSP support. enable with
+	  'set ocsp "http://10.0.0.10:8888/"' ok mikeb@
+
+2014-02-17 11:00  reyk
+
+	* sbin/iked/: ca.c, crypto.c, eap.c, ikev1.c, ikev2.c, ikev2_msg.c,
+	  ikev2_pld.c: Fix compiler warnings in the format strings: use %zd
+	  for ssize_t and %zu for size_t.
+
+	  From Andre de Oliveira With input and OK from blambert@ markus@
+
+2014-02-14 10:23  benno
+
+	* sbin/iked/: iked.h, proc.c: remove unused function that distracts
+	  from cleaning up the imsg_flush() mess ok krw, florian, henning
+
+2014-02-14 09:00  markus
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2.h, ikev2_pld.c, parse.y,
+	  pfkey.c, util.c: initial support for IPComp still experimental
+	  and rekeying needs some work; ok mikeb@
+
+2014-02-12 12:59  markus
+
+	* sbin/iked/ikev2_pld.c: make sure to set the msg_responded flag on
+	  the original message; ok mikeb@
+
+2014-01-24 07:35  markus
+
+	* sbin/iked/: ikev2.c, policy.c: re-lookup the policy as soon as we
+	  have the ID of the peer (destid) ok mikeb@
+
+2014-01-24 07:31  markus
+
+	* sbin/iked/iked.h: enable format-string checks for log_*(); ok
+	  mikeb
+
+2014-01-24 07:30  markus
+
+	* sbin/iked/policy.c: make sure sa_lookup() can actually find SAs;
+	  ok mikeb
+
+2014-01-24 07:29  markus
+
+	* sbin/iked/crypto.c: don't leak prv RSA key for each signature; ok
+	  mikeb
+
+2014-01-24 05:58  mikeb
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c,
+	  timer.c: use a bit saner timer api
+
+2014-01-22 09:25  markus
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, pfkey.c: implement DPD
+	  similar to isakmpd, but only send DPD-messages 'on-demand' (less
+	  aggressive, only if the ESP-SAs are actually used); feedback & ok
+	  mikeb@
+
+2014-01-22 00:21  henning
+
+	* sbin/iked/parse.y: relax the cfg file secrecy check slightly to
+	  allow group readability default permissions and mtree NOT
+	  changed.  prodded by benno, ok phessler benno jmatthew theo
+	  pelikan florian
+
+2014-01-18 05:54  martynas
+
+	* sbin/iked/Makefile, usr.sbin/ikectl/Makefile: Remove -Wbounded:
+	  it is now the compiler default.
+
+2013-12-09 15:22  markus
+
+	* sbin/iked/: iked.h, ikev2.c: distingush between sa_msgid not set
+	  and 0; otherwise we start dropping messages if we usually are the
+	  initiator and the peer initiates rekeying first.  ok mikeb@
+
+2013-12-04 16:33  mikeb
+
+	* sbin/iked/crypto.c: Use EVP_sha1 directly instead of doing the
+	  EVP_get_digestbyname lookup.	Correct the comment while here:
+	  RFC5996 says we SHOULD use SHA1 as a hashing function for RSA
+	  Digital Signatures.  Tested by and OK markus.
+
+2013-12-03 13:55  markus
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c,
+	  parse.y, pfkey.c, policy.c, util.c: never cast to
+	  sockaddr_storage, always cast to the abstract 'class' sockaddr
+	  this fixes an out-of-bounds-memcpy in pfkey_process(); ok mikeb@
+
+2013-11-28 20:30  markus
+
+	* sbin/iked/ikev2.c: mark replaced flows as 'not loaded'; this can
+	  happen if both sides negotiate the same flow, but only one flow
+	  is active in the kernel; ok mikeb@
+
+2013-11-28 20:28  markus
+
+	* sbin/iked/config.c: don't leak duplicate flows; ok mikeb@
+
+2013-11-28 20:27  markus
+
+	* sbin/iked/ikev2.c: drop duplicate requests
+
+	  otherwise IKE_AUTH requests might be accepted twice, leading to
+	  TWO child-SAs with the same remote SPI, but different local SPIs,
+	  leading to corrupt child-SA tables.
+
+	  with & ok mikeb@
+
+2013-11-28 20:26  markus
+
+	* sbin/iked/iked.h: document sa_msgid & sa_reqid; ok mikeb@
+
+2013-11-28 20:24  markus
+
+	* sbin/iked/policy.c: sa_lookup: don't compare with sh_rspi if rspi
+	  is not set
+
+	  otherwise this can happen: initiator retransmits SA_INIT with
+	  rspi of zero, sa_lookup for responder fails, and it creates a new
+	  SA, that cannot be inserted in the SA tree
+
+2013-11-28 20:23  markus
+
+	* sbin/iked/policy.c: sa_new(): discard & free duplicate IKESAs; ok
+	  mibek@
+
+2013-11-28 20:21  markus
+
+	* sbin/iked/util.c: include hexdump in debug output only for -vvv;
+	  ok mikeb@
+
+2013-11-28 20:21  markus
+
+	* sbin/iked/: ca.c, iked.h, ikev2.c, ikev2_pld.c, parse.y: support
+	  raw pubkey authentication w/o x509 certificates; mostly by
+	  Michael Cardell Widerkrantz, reyk@ and mikeb@; ok mike@
+
+2013-11-25 13:12  benno
+
+	* sbin/iked/parse.y: use u_char for buffers in yylex, for ctype
+	  calls found by millert@, from deraadt@
+
+2013-11-22 04:12  deraadt
+
+	* sbin/iked/: parse.y, util.c: Whole bunch of (unsigned char) casts
+	  carefully added for ctype calls.  Careful second audit by millert
+
+2013-11-21 17:46  millert
+
+	* sbin/iked/: iked.h, util.c: Make the bit string u_char * in
+	  print_bits().  In practice we shouldn't have chars > 127 in these
+	  but it is better not to assume this.	OK deraadt@
+
+2013-11-15 12:30  mikeb
+
+	* sbin/iked/: control.c, proc.c: Cope with the EAGAIN API change
+	  for msgbuf_write()
+
+2013-11-14 20:48  deraadt
+
+	* usr.sbin/ikectl/ikectl.c: cope with the EAGAIN API change for
+	  msgbuf_write() ok benno
+
+2013-11-14 13:35  markus
+
+	* sbin/iked/pfkey.c: ignore messages for other daemons, like
+	  isakmpd does; ok mikeb
+
+2013-11-14 12:44  markus
+
+	* sbin/iked/pfkey.c: setup pfkey timer before use; ok mikeb
+
+2013-11-14 12:38  markus
+
+	* sbin/iked/: ca.c, crypto.c, iked.h: pass caller to ca_sslerror
+	  for better error messages; ok mikeb
+
+2013-11-14 12:30  markus
+
+	* sbin/iked/dh.c: verify EC points; from hshoexer; ok mikeb
+
+2013-11-14 12:26  markus
+
+	* sbin/iked/Makefile: not need to specify OBJDIR; ok mikeb
+
+2013-11-11 09:15  mpi
+
+	* sys/netinet/ip_ipsp.h: Replace most of our formating functions to
+	  convert IPv4/6 addresses from network to presentation format to
+	  inet_ntop().
+
+	  The few remaining functions will be soon converted.
+
+	  ok mikeb@, deraadt@ and moral support from henning@
+
+2013-11-01 10:42  henning
+
+	* sbin/iked/iked.conf.5: altq -> new queue in examples From: Arto
+	  Jonsson <ajonsson at kapsi.fi>
+
+2013-10-24 18:50  deraadt
+
+	* sys/net/pfkeyv2.h: Move more stuff under _KERNEL ok claudio
+
+2013-10-24 02:55  deraadt
+
+	* sbin/iked/: config.c, iked.c, imsg_util.c, policy.c, util.c: no
+	  need for netinet/ip_var.h (and friends)
+
+2013-09-26 13:09  mikeb
+
+	* sbin/iked/ikev2_msg.c: After some manipulations with the buffer,
+	  ike message header (hdr) might no longer point to the same memory
+	  as before.
+
+	  The bug was reported and fix was tested by LEVAI Daniel.  Thanks!
+
+2013-08-16 19:47  guenther
+
+	* usr.sbin/ikectl/ikectl.c: Use %lld and cast to (long long) when
+	  printing time_t values
+
+	  otto@ millert@ lteo@ mikeb@ deraadt@
+
+2013-07-16 11:13  schwarze
+
+	* usr.sbin/ikectl/ikectl.8: use .Mt for email addresses; from Jan
+	  Stary <hans at stare dot cz>; ok jmc@
+
+2013-07-16 09:45  schwarze
+
+	* sbin/iked/: iked.8, iked.conf.5: Add missing .Mt macros for
+	  AUTHORS email addresses.  From Jan Stary <hans at stare dot cz>.
+	  ok jmc@
+
+2013-07-04 09:48  mpi
+
+	* sys/netinet/ip_ipsp.h: These functions are only used in debug
+	  code, so put them under ifdef ENCDEBUG to make sure we don't use
+	  them elsewhere.
+
+2013-06-29 09:08  jmc
+
+	* sbin/iked/iked.8: do not use Sx for sections outwith the page;
+	  man4 still to go...
+
+2013-06-13 09:11  reyk
+
+	* sbin/iked/ikev2.c: Add support for protected-subnet config types.
+
+	  From Ryan Slack
+
+2013-05-22 10:32  sthen
+
+	* sbin/iked/iked.conf.5: Move the gmac/null ciphers to a different
+	  table block, clearly labelled as not doing encryption.  ok reyk@
+
+2013-04-11 12:06  mpi
+
+	* sys/netinet/ip_ipsp.h: Remove the extern keyword from function
+	  declarations, document sysctl declarations, move variables and
+	  functions used in only one place in their corresponding file. No
+	  functional change.
+
+	  No objection from markus@, ok mikeb@
+
+2013-03-30 16:31  reyk
+
+	* sbin/iked/ikev2.h: Sync with latest IKEv2 Parameters from IANA.
+	  No functional change.
+
+2013-03-21 04:30  deraadt
+
+	* sbin/iked/: ca.c, config.c, control.c, eap.c, iked.c, ikev1.c,
+	  ikev2.c, ikev2_msg.c, ikev2_pld.c, imsg_util.c, parse.y, pfkey.c,
+	  proc.c: remove excessive includes
+
+2013-03-11 17:40  deraadt
+
+	* sbin/iked/control.c: handle ECONNABORTED errors from accept().
+	  In many code blocks they can be ignored silently and without
+	  aborting, much like EINTR and EWOULDBLOCK are.  ok's from various
+	  maintainers of these directories...
+
+2013-03-09 02:27  deraadt
+
+	* sys/net/pfkeyv2.h: normalize structure definitions
+
+2013-03-05 19:16  sobrado
+
+	* sbin/iked/iked.conf.5: cross referencing the manual page is
+	  better.
+
+	  change suggested and ok'd by jmc@
+
+2013-03-05 14:51  sobrado
+
+	* sbin/iked/iked.conf.5: fix program name used in AUTHORS section.
+
+	  ok mikeb@
+
+2013-02-14 16:22  mikeb
+
+	* sys/netinet/ip_ipsp.h: Merge of an original work by markus@ and
+	  gerhard@ to increase the anti-replay window size to 2100 entries;
+	  plus small ESN related improvements.	ok markus
+
+2013-01-08 10:38  reyk
+
+	* sbin/iked/Makefile, sbin/iked/ca.c, sbin/iked/chap_ms.c,
+	  sbin/iked/chap_ms.h, sbin/iked/config.c, sbin/iked/control.c,
+	  sbin/iked/crypto.c, sbin/iked/dh.c, sbin/iked/dh.h,
+	  sbin/iked/eap.c, sbin/iked/eap.h, sbin/iked/genmap.sh,
+	  sbin/iked/iked.8, sbin/iked/iked.c, sbin/iked/iked.conf.5,
+	  sbin/iked/iked.h, sbin/iked/ikev1.c, sbin/iked/ikev2.c,
+	  sbin/iked/ikev2.h, sbin/iked/ikev2_msg.c, sbin/iked/ikev2_pld.c,
+	  sbin/iked/imsg_util.c, sbin/iked/log.c, sbin/iked/parse.y,
+	  sbin/iked/pfkey.c, sbin/iked/policy.c, sbin/iked/proc.c,
+	  sbin/iked/timer.c, sbin/iked/types.h, sbin/iked/util.c,
+	  usr.sbin/ikectl/Makefile, usr.sbin/ikectl/ikeca.c,
+	  usr.sbin/ikectl/ikectl.8, usr.sbin/ikectl/ikectl.c,
+	  usr.sbin/ikectl/parser.c, usr.sbin/ikectl/parser.h: Remove
+	  private CVS tag from an obsolete repository and bump copyright to
+	  2013 while I'm here... this is my way of saying "happy new
+	  year!".
+
+2012-12-15 23:20  reyk
+
+	* sbin/iked/: config.c, eap.c, ikev2_msg.c: Remove unused
+	  variables.
+
+2012-12-15 23:19  reyk
+
+	* sbin/iked/iked.c: Don't print an error if the process exited
+	  normally.
+
+2012-12-15 23:18  reyk
+
+	* sbin/iked/: crypto.c, dh.c: Plug two memory leaks when cleaning
+	  up the dh/dsa crypto structures.
+
+2012-12-15 23:17  reyk
+
+	* sbin/iked/chap_ms.c: Fix a very hidden but harmless overflow in
+	  the MSCHAPv2 code.
+
+2012-12-15 23:15  reyk
+
+	* sbin/iked/ikev2.c: Don't pass an uninitialized arg to
+	  ibuf_release(); initialize it to NULL.
+
+2012-12-15 23:12  reyk
+
+	* sbin/iked/: ikev2_pld.c, policy.c: Don't dereference NULL
+	  pointers (and some cleanup here).
+
+2012-12-08 12:51  mikeb
+
+	* usr.sbin/ikectl/ikeca.c: don't forget to include a path separator
+	  after an SSLDIR; reported by david hill
+
+2012-12-04 02:24  deraadt
+
+	* sbin/iked/: chap_ms.c, util.c: remove some unnecessary
+	  sys/param.h inclusions
+
+2012-11-29 21:34  jmc
+
+	* sbin/iked/iked.8: use Nm instead of Xr to self;
+
+2012-11-29 15:08  reyk
+
+	* sbin/iked/: iked.8, iked.c, iked.h, pfkey.c, types.h: Prevent VPN
+	  traffic leakages in dual-stack hosts/networks.  See
+	  http://tools.ietf.org/html/draft-gont-opsec-vpn-leakages.
+
+	  We forcibly block IPv6 traffic by loading a "flow esp out from
+	  ::/0 to ::/0 type deny" unless the protocol is used in any of the
+	  flows.  Note that this will block any IPv6 traffic, superseding
+	  routes and pf, on the host by default when iked is running with
+	  IPv4 flows only.  This auto-blocking feature can be disabled by
+	  specifying the "-6" command line flag to iked.
+
+	  Thanks to Fernando Gont.
+
+	  ok mikeb@
+
+2012-11-16 14:39  mikeb
+
+	* sbin/iked/ca.c: promote some debug messages to warnings; ok reyk
+
+2012-11-01 21:27  reyk
+
+	* usr.sbin/ikectl/ikectl.c: Remove dead code that was a leftover
+	  from the initial code which was based on snmpctl.  Found and
+	  committed from the plane in 10km (35.000 feet).  No functional
+	  change and this diff doesn't touch any crypto code so the current
+	  country below me cannot blame me for importing / exporting any
+	  crypto.
+
+	  ok benno@
+
+2012-10-25 15:06  reyk
+
+	* sbin/iked/genmap.sh: Include the license and copyright notice in
+	  the generated files.
+
+2012-10-25 15:01  reyk
+
+	* sbin/iked/: genmap.sh, ikev2.h, parse.y: Move the arrays of
+	  default IKE and ESP transforms into parse.y instead of generating
+	  them with genmap from ikev2.h.  They're only really needed in
+	  parse.y and this diff also allows to simplify genmap.sh.
+
+2012-10-25 12:35  reyk
+
+	* usr.sbin/ikectl/ikeca.cnf: Remove support email address from the
+	  example that is intended for customers for an existing company.
+
+2012-10-23 14:40  reyk
+
+	* sbin/iked/pfkey.c: Change the order of variables just to shrink
+	  the diff to the (not yet released) portable version a bit.  No
+	  functional changes.
+
+2012-10-23 14:36  reyk
+
+	* sbin/iked/types.h, usr.sbin/ikectl/ikeca.c: Allow to overwrite a
+	  few more definitions like file paths from the Makefile.  No
+	  functional change.
+
+2012-10-23 14:32  reyk
+
+	* sbin/iked/ikev2.c: Add a cast for input to inet_pton() to silence
+	  a possible but harmless compiler warning.
+
+2012-10-22 13:27  jmc
+
+	* sbin/iked/iked.8: tweak previous;
+
+2012-10-22 10:25  reyk
+
+	* sbin/iked/: config.c, iked.8, iked.c, iked.h, ikev2.c,
+	  ikev2_msg.c, ikev2_pld.c, types.h: Fix NAT-T support in iked,
+	  both on the initiator and the responder side.  Also add a new
+	  command line option -t to optionally enforce NAT-T with UDP
+	  encapsulation on port 4500.
+
+	  Tested by mikeb@ and me ok mikeb@
+
+2012-10-18 10:49  markus
+
+	* sys/netinet/ip_ipsp.h: simplify checkreplaywindow() API; make
+	  call/return code handling consistent ok mikeb@
+
+2012-10-11 08:23  reyk
+
+	* sbin/iked/types.h: The RSA public keys will be found in a
+	  subdirectory of /etc/iked/ called "pubkeys" not "pubkey".
+
+	  Found by Michael Cardell "MC" Widerkrantz
+
+2012-10-09 13:43  reyk
+
+	* sbin/iked/ca.c: "If srcid is omitted, the default is to use the
+	  hostname of the local machine." This has been broken when the
+	  subjectAltName certificate check was introduced some time ago.
+	  Fix it by obtaining the hostname source Id in the certificate
+	  request code as well.
+
+	  ok mikeb@
+
+2012-10-08 17:41  camield
+
+	* sys/netinet/ip_ipsp.h: Forward declare struct m_tag in
+	  netinet/ip_ipsp.h so we don't need to include sys/mbuf.h in
+	  net/pfvar.h.
+
+	  Flagged by and ok guenther@
+
+2012-09-25 21:50  brad
+
+	* sbin/iked/Makefile: Correct DPADD to not list libssl which is not
+	  used by iked.
+
+	  ok sthen@ mikeb@
+
+2012-09-22 20:09  jmc
+
+	* sbin/iked/iked.8: last stage of rfc changes, using consistent
+	  Rs/Re blocks, and moving the references into a STANDARDS section;
+
+2012-09-20 10:25  blambert
+
+	* sys/netinet/ip_ipsp.h: spltdb() was really just #define'd to be
+	  splsoftnet(); replace the former with the latter
+
+	  no change in md5 checksum of generated files
+
+	  ok claudio@ henning@
+
+2012-09-18 12:07  reyk
+
+	* sbin/iked/ca.c, sbin/iked/chap_ms.c, sbin/iked/chap_ms.h,
+	  sbin/iked/config.c, sbin/iked/control.c, sbin/iked/crypto.c,
+	  sbin/iked/dh.c, sbin/iked/dh.h, sbin/iked/eap.c, sbin/iked/eap.h,
+	  sbin/iked/genmap.sh, sbin/iked/iked.8, sbin/iked/iked.c,
+	  sbin/iked/iked.conf.5, sbin/iked/iked.h, sbin/iked/ikev1.c,
+	  sbin/iked/ikev2.c, sbin/iked/ikev2.h, sbin/iked/ikev2_msg.c,
+	  sbin/iked/ikev2_pld.c, sbin/iked/imsg_util.c, sbin/iked/parse.y,
+	  sbin/iked/pfkey.c, sbin/iked/policy.c, sbin/iked/timer.c,
+	  sbin/iked/types.h, sbin/iked/util.c, usr.sbin/ikectl/ikeca.c,
+	  usr.sbin/ikectl/ikectl.8, usr.sbin/ikectl/ikectl.c,
+	  usr.sbin/ikectl/parser.c, usr.sbin/ikectl/parser.h: update email
+	  addresses to match reality.  sure jsg@ mikeb@
+
+2012-09-18 09:24  markus
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: remove the
+	  SADB_X_SAFLAGS_{HALFIV,RANDOMPADDING,NOREPLAY} pfkey-API (not set
+	  anywhere) as well as the matching
+	  TDBF_{HALFIV,RANDOMPADDING,NOREPLAY} code.  ok mikeb@
+
+2012-07-16 18:05  markus
+
+	* sys/netinet/ip_ipsp.h: add IP_IPSECFLOWINFO option to sendmsg()
+	  and recvmsg(), so npppd(4) can use this to select the IPsec
+	  tunnel for sending L2TP packets.  this fixes Windows (always
+	  binding to 1701) and Android clients (negotiating wildcard
+	  flows); feedback mpf@ and yasuoka@; ok henning@ and yasuoka@; ok
+	  jmc@ for the manpage
+
+2012-07-08 11:48  deraadt
+
+	* sbin/iked/types.h, usr.sbin/ikectl/ikeca.c: if you use nitems()
+	  in userland, you must define it yourself discussed with guenther
+
+2012-07-05 08:37  mikeb
+
+	* sbin/iked/ikev2.c: when rekeying ike sa copy more info from the
+	  old one; fixes the last known iked inter-op problem with windows
+	  7.
+
+2012-07-03 11:19  mikeb
+
+	* sbin/iked/ikev2.c: Improve the key derivation function to produce
+	  correct keying material when rekeying IKE SA as specified in the
+	  section 2.18 of RFC5996. Makes Windows 7 clients a bit happier.
+
+2012-07-02 16:55  mikeb
+
+	* sbin/iked/ikev2.c: checking state flags make sense only when
+	  processing a response
+
+2012-07-02 13:29  mikeb
+
+	* sbin/iked/ikev2.c: augment every sa_free call with a debugging
+	  log message
+
+2012-07-02 13:03  mikeb
+
+	* sbin/iked/: config.c, iked.h, ikev2.c: Don't close IKE SA
+	  immediately after creating a new one when rekeying.  Instead set
+	  a timeout that will shut it down in case we don't get an SA
+	  delete notification.
+
+2012-07-02 09:49  mikeb
+
+	* sbin/iked/ikev2.c: a state machine is not worth the trouble when
+	  you've got a flag. doh!
+
+2012-06-30 14:51  naddy
+
+	* sbin/iked/: iked.conf.5, parse.y: enable use of
+	  AES-{192,256}-CTR, and explicitly of AES-128-CTR, for IPsec ESP
+	  ok mikeb@
+
+2012-06-29 15:05  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2.h, parse.y, pfkey.c: Add
+	  missing ESN bits
+
+2012-06-29 14:48  mikeb
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Add support for the
+	  Extended (64-bit) Sequence Number as defined in RFC4302 and
+	  RFC4303.  Right now only software crypto engine is capable of
+	  doing it.
+
+	  Replay check was rewritten to implement algorithm described in
+	  the Appendix A of RFC4303 and the window size was increased to
+	  64.
+
+	  Tested against OpenBSD, Linux (strongswan) and Windows.
+
+	  No objection from the usual suspects.
+
+2012-06-27 15:36  mikeb
+
+	* sbin/iked/ikev2_msg.c: leftover code re-enqueued the same item on
+	  the list multiple times
+
+2012-06-27 14:03  mikeb
+
+	* sbin/iked/ikev2_msg.c: prevent an endless loop
+
+2012-06-26 11:09  mikeb
+
+	* sbin/iked/ikev2_msg.c: improve ikev2_msg_retransmit_timeout
+
+2012-06-26 11:05  mikeb
+
+	* sbin/iked/ikev2.c: close SA when IKE_SA_INIT or IKE_AUTH
+	  exchanges fail; don't cache the response to IKE_SA_INIT.
+
+2012-06-26 11:00  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c: compare exchange types
+	  as well when looking up a message; proceed with a response only
+	  when the appropriate request is found.
+
+2012-06-22 16:28  mikeb
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, ikev2_msg.c: Add initial
+	  support for retransmition timeouts and response retries.  This
+	  should still be considered an experimental work in progress.
+
+2012-06-22 16:06  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, timer.c: decouple timer
+	  initialization from timer_register
+
+2012-06-04 09:14  mikeb
+
+	* sbin/iked/dh.c: Rounding up a number of bytes in a bignum
+	  returned by the BN_num_bytes() has implications when dealing with
+	  leading zeroes.  Prevent an incorrect conversion of the EC point
+	  to the binary representation by inferring the X and Y components'
+	  lengths from the EC group length and zeroing out the appropriate
+	  chunks of the target buffer.	From hshoexer@
+
+2012-05-30 16:17  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, timer.c: more timer
+	  changes
+
+2012-05-30 09:39  mikeb
+
+	* sbin/iked/: ikev2.c, policy.c: when changing peer's address in
+	  the SA, remove the old entry from the tree before doing the
+	  actual change, otherwise we won't remove anything for real.  also
+	  add the newly created SA to the peer's tree so that initiator
+	  timer will treat the ike policy as "in progress".
+
+2012-05-30 09:18  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c: pass a file descriptor
+	  in the msg_fd instead of a function argument
+
+2012-05-29 15:09  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, timer.c: improve timer
+	  framework; will be needed soon
+
+2012-05-24 14:41  mikeb
+
+	* sbin/iked/ikev2_msg.c: don't increment the next expected message
+	  id when sending a response back.  while it might look like a step
+	  backwards, this fixes up eap negotiation and bigger changes to
+	  this code are in the pipe anyways.
+
+2012-05-23 16:40  mikeb
+
+	* sbin/iked/iked.conf.5: fixup from/to specification
+
+2012-05-23 16:23  mikeb
+
+	* sbin/iked/ikev2.c: remove hardcoded values for esp and let
+	  ikev2_add_proposals decide which proposals to include if protocol
+	  is not specified explicitely; allows iked to successfully
+	  negotiate ah.
+
+2012-05-23 14:54  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c: factor out proposal matching code
+	  from ikev2_sa_negotiate and eliminate the protoid argument as a
+	  first step towards successful ah negotiation; make code a bit
+	  more readable while here.
+
+2012-05-08 15:37  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, util.c: When setting up NAT-T notify
+	  payloads, make sure to supply an actual source address so that a
+	  valid hash can be generated.	Fixes a bug introduces some time
+	  ago that prevented iked from initiating if NAT-T wasn't disabled
+	  (via -T) and local address wasn't specified.
+
+2012-05-08 08:53  mikeb
+
+	* sbin/iked/parse.y: rename espxforms to ipsecxforms for clarity
+
+2012-05-07 14:17  mikeb
+
+	* sbin/iked/genmap.sh: fixup formatting in the generated files
+
+2012-05-07 10:58  mikeb
+
+	* sbin/iked/: ikev2.c, ikev2.h, ikev2_msg.c, ikev2_pld.c: Sync up
+	  several defines with RFC 5996.  IANA has changed the existing
+	  IKEv2 Payload Type "Encrypted" (E) to "Encrypted and
+	  Authenticated" (SK).
+
+2012-05-02 18:01  gsoares
+
+	* usr.sbin/ikectl/ikectl.c: s/snmpd/iked/ in comment
+
+	  ok henning@
+
+2012-04-24 14:56  jmc
+
+	* sbin/iked/iked.conf.5: take a stab at documenting when arguments
+	  need quoted, and valid macro characters;
+
+	  prompted by a diff from robert peichaer org
+
+	  thanks gilles and henning for feedback ok deraadt zinke
+
+2012-04-18 13:01  jmc
+
+	* sbin/iked/iked.conf.5: undo an error introduced by myself in
+	  previous; spotted by Sebastian Rother
+
+2012-04-05 17:31  deraadt
+
+	* sbin/iked/: control.c, iked.h: rate-limit accepting of new
+	  connections while we are experiencing fd exhaustion.	ok mikeb
+
+2012-03-24 00:40  jsg
+
+	* sbin/iked/: ikev2_pld.c, parse.y, pfkey.c, util.c: fix some leaks
+	  ok mikeb@
+
+2011-09-03 22:59  jmc
+
+	* sbin/iked/iked.conf.5: make -column lists pretty again;
+
+	  specifically, rewrite them to permit some markup in the column
+	  headers, and use "Ta" instead of literal tabs; mandoc does not
+	  currently match groff 100%, but a mandoc fix may be some time
+	  off, and we've gone enough releases with poorly formatting column
+	  lists.
+
+	  in some cases i have rewritten the lists as -tag, where -column
+	  made little sense.
+
+2011-08-27 16:29  mikeb
+
+	* sbin/iked/crypto.c: Under certain circumstances iked can be
+	  tricked to bypass a signature verification caused by the
+	  incorrect check of the EVP_VerifyFinal return value.	Issue was
+	  discovered and reported by Justin Ferguson,
+	  justin-dot-ferguson-at-ioactive.com.	Thanks!
+
+	  While here, check for HMAC_* return values.
+
+	  ok jsg, markus
+
+2011-08-19 19:59  jmc
+
+	* sbin/iked/iked.conf.5: as with other list types, column lists
+	  generally do not need a Pp/-compact construct;
+
+	  this also sidesteps what seems to be a problem with mandoc, in
+	  that "-column -compact" seems to mess up the formatting. thus
+	  these pages should now have their lists formatted nicely (i.e.
+	  correctly aligned and with indent applied);
+
+	  as a side note, the fact that headers are not properly marked up
+	  is another issue which will be addressed separately (a mandoc fix
+	  is needed, i think).	i have fudged a few of these to mark up
+	  properly, since the workaround does make sense for some pages.
+
+	  as another side note, i haven;t fixed man7, as i need to prepare
+	  a separate diff for kristaps and ingo.
+
+2011-07-05 19:59  tedu
+
+	* sbin/iked/config.c: fix memcpy sizeof.  found by jsg.  ok deraadt
+	  krw mikeb
+
+2011-07-05 01:28  mikeb
+
+	* sbin/iked/ikev2.c: Fix IKEV2_N_NO_ADDITIONAL_SAS notification by
+	  including the SPI
+
+2011-07-03 20:20  mikeb
+
+	* sbin/iked/dh.c: iked requires the same dh diff as isakmpd:
+
+	  When BN_bn2bin converts a bignum to the binary representation it
+	  skips leading zeroes if there are any.  To accommodate the
+	  difference with the protocol we need to prepend those zeroes
+	  ourselves.
+
+2011-05-27 12:01  reyk
+
+	* sbin/iked/ca.c, sbin/iked/chap_ms.c, sbin/iked/eap.c,
+	  sbin/iked/ikev2.c, sbin/iked/parse.y, sbin/iked/pfkey.c,
+	  sbin/iked/timer.c, sbin/iked/util.c, usr.sbin/ikectl/ikeca.c,
+	  usr.sbin/ikectl/ikectl.c, usr.sbin/ikectl/parser.c,
+	  usr.sbin/ikectl/parser.h: spacing
+
+2011-05-09 11:27  reyk
+
+	* sbin/iked/proc.c: bump copyright
+
+2011-05-09 11:15  reyk
+
+	* sbin/iked/: ca.c, config.c, control.c, iked.c, iked.h, ikev1.c,
+	  ikev2.c, ikev2_msg.c, imsg_util.c, proc.c: rename functions in
+	  proc.c to proc_* and move some code from imsg_util.c to proc.c.
+	  this is the first sync to what i did for relayd but does not
+	  include the multi-instance handling - so no functional change.
+
+2011-05-05 12:59  reyk
+
+	* sbin/iked/: ca.c, iked.h, ikev1.c, ikev2.c, proc.c: Small tweak -
+	  add direct pointer to env instead of using an indirect one.
+
+2011-05-05 12:55  reyk
+
+	* sbin/iked/: ca.c, control.c, iked.c, iked.h, ikev1.c, ikev2.c,
+	  imsg_util.c, proc.c: Move the proc.c-specific runtime state out
+	  of struct iked into a sub-struct.  This removes iked-specific
+	  stuff from proc.c.
+
+2011-05-05 12:17  reyk
+
+	* sbin/iked/: ca.c, config.c, iked.c, iked.h, ikev1.c, ikev2.c,
+	  imsg_util.c, pfkey.c, proc.c, types.h: rename iked_proc* to
+	  privsep_proc*.  no functional change.
+
+2011-05-02 12:39  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, policy.c: store the peer address as
+	  it was specified in the policy in the tree that is used to figure
+	  out whether the policy is active or not.  makes active sa lookup
+	  via policy work for nat traversal.  problem was reported and fix
+	  was tested by sthen, ok sthen, reyk
+
+2011-04-18 09:54  reyk
+
+	* sbin/iked/: ikev2.c, policy.c: Improve the iked acquire mode peer
+	  <-> policy matching.	This change picks the peer from the acquire
+	  message and allows to match masked peers in the policies like
+	  "peer any" or "peer 10.0.0.0/8" instead of requiring exactly
+	  matching peer specifications.
+
+	  ok mikeb@
+
+2011-04-18 08:45  reyk
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, parse.y, policy.c: When
+	  the kernel wants to acquire an SA for an unknown flow, lookup a
+	  matching policy and init a new IKE SA.  This adds support for
+	  "acquire mode" from static flows.
+
+	  ok mikeb@
+
+2011-04-15 13:10  reyk
+
+	* sbin/iked/: iked.h, ikev2.c: remove unused function
+	  ikev2_flows_delete()
+
+2011-01-28 18:21  mikeb
+
+	* sbin/iked/ikev2.c: improve behavior of drop_sa: always
+	  negotiating a new child sa;  ok reyk
+
+2011-01-26 17:07  reyk
+
+	* sbin/iked/: ikev2.c, timer.c: Don't initiate any connections in
+	  passive mode, not even for ACQUIRE messages from the PFKEY
+	  socket.  This is needed for sasyncd.
+
+	  ok mikeb@
+
+2011-01-26 16:59  mikeb
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, ikev2_pld.c, pfkey.c,
+	  policy.c: get rid of acquire flows completely, as they tend to
+	  pass traffic when there's no sa established (as pointed out by
+	  reyk).  instead use require mode feature to send acquires from
+	  the kernel.  this allows us to get rid of the code that changes
+	  flow mode to acquire and keep all installed flows in the tree and
+	  save up on some code that deals with renegotiation.  also several
+	  entities were renamed (iked_acqflows -> iked_activeflows,
+	  iked_ipsecsas -> iked_activesas, ikev2_acquire ->
+	  ikev2_acquire_sa).   ok reyk
+
+2011-01-26 16:35  mikeb
+
+	* sbin/iked/ikev2.c: enable child sas and do sa and flow transfer
+	  after succeeding with all the preparation steps.  don't forget to
+	  change {flow,csa}_ikesa pointers when transefing to a different
+	  ike sa.  ok reyk
+
+2011-01-25 10:58  mikeb
+
+	* sbin/iked/ikev2.c: fixup child sa deletion in drop_sa;  ok reyk
+
+2011-01-24 17:44  mikeb
+
+	* sbin/iked/ikev2.c: fixup previous for the responder mode
+
+2011-01-21 18:02  mikeb
+
+	* sbin/iked/ikev2.c: repair rekeying by sending appropriate traffic
+	  selector;  ok reyk
+
+2011-01-21 17:01  reyk
+
+	* sbin/iked/: iked.h, ikev2.c: don't use memcmp on comparing two
+	  iked_addrs but IKED_ADDR_EQ.
+
+	  ok mikeb@
+
+2011-01-21 16:51  reyk
+
+	* sbin/iked/: iked.h, ikev2.c: - Fix traffic selector configuration
+	  that it is always "from $localnet to $peernet" and not depending
+	  on the initiator/responder mode.  - Remove the flow hash
+	  calculated but not used anymore.
+
+	  ok mikeb@
+
+2011-01-21 13:19  reyk
+
+	* sbin/iked/ikev2.c: Remove misleading error message.
+
+	  ok mikeb@
+
+2011-01-21 13:09  reyk
+
+	* sbin/iked/ikev2.c: don't create child sas from empty proposals.
+
+	  ok mikeb@
+
+2011-01-21 12:37  reyk
+
+	* sbin/iked/ikev2_msg.c: handle empty encrypted payloads (might
+	  happen with some informationals)
+
+	  ok mikeb@
+
+2011-01-21 12:34  jmc
+
+	* sbin/iked/iked.conf.5: tweak previous;
+
+2011-01-21 11:56  reyk
+
+	* sbin/iked/: config.c, iked.c, iked.conf.5, iked.h, ikev1.c,
+	  ikev2.c, ikev2_msg.c, parse.y, policy.c, timer.c, types.h,
+	  util.c: Reimplement the iked(8) policy evaluation for incoming
+	  connections to use the last matching semantics of PF.  The
+	  previous rbtree-based implementation was broken and tried to do a
+	  longest prefix match.  But instead of prefix match and using
+	  radix-trees to fix it I decided with mikeb@ to implement it as
+	  last matching policy evaluation.  The last matching policy wins;
+	  the "quick" keyword can enforce first matching; additional
+	  keywords like "skip" are specific to iked(8).  See iked.conf(5)
+	  for more details.
+
+	  The implementation also uses skip steps based on PF's code.  It
+	  significantly speeds up the evaluation of many policies but also
+	  adds a little delay when loading them (only noticeable with
+	  thousands of policies).  This allows iked(8) to scale well with
+	  thousands of configured policies but I also liked the fact to
+	  have skip steps in another piece of code.
+
+	  ok dhartmei@ for using his skip step code under the ISC license
+	  in policy.c ok mikeb@, jmc@
+
+2011-01-21 11:37  reyk
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, pfkey.c: split pfkey
+	  initialization into a privileged and unprivileged part to prevent
+	  a possible crash.
+
+	  ok mikeb@
+
+2011-01-20 13:58  jmc
+
+	* usr.sbin/ikectl/ikectl.8: more double word removal;
+
+2011-01-18 11:34  mikeb
+
+	* sbin/iked/policy.c: reyk noticed that my rb-tree-fu is not that
+	  great.  fixup compare function to do exact matches;  ok reyk
+
+2011-01-17 18:57  reyk
+
+	* sbin/iked/ikev2.c: silence stupid gcc warning by initializing a
+	  variable with NULL.
+
+2011-01-17 18:49  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, pfkey.c, policy.c,
+	  types.h: Add initial acquire mode support and use it whenever
+	  Windows peers decide to drop Child SA based on the inactivity
+	  timer.  In this case we instruct the kernel to send us an acquire
+	  message upon receiving a packet for those hosts and initiate a
+	  Child SA creation exchange ourselves.
+
+	  ok reyk
+
+2011-01-17 17:16  mikeb
+
+	* sbin/iked/: iked.h, parse.y, util.c: move mask2prefixlen
+	  functions to the util module;  ok reyk
+
+2011-01-12 14:35  mikeb
+
+	* sbin/iked/: config.c, iked.h, pfkey.c: postpone processing of
+	  pfkey messages received in pfkey_reply instead of just dropping
+	  them;  ok reyk
+
+2011-01-12 14:26  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c: decouple flow deletion
+	  from the ikev2_childsa_delete;  ok reyk
+
+2011-01-12 14:23  mikeb
+
+	* sbin/iked/ikev2.c: fixup bogus check;  ok reyk
+
+2011-01-12 14:22  mikeb
+
+	* sbin/iked/ikev2.c: don't forget to specify spi sizes;  ok reyk
+
+2010-12-23 16:39  mikeb
+
+	* sbin/iked/parse.y: pick netmask instead of address when we mean
+	  it; found by dhill, ok reyk
+
+2010-12-23 15:11  mikeb
+
+	* sbin/iked/ikev2.c: always add a none payload, should fix ike sa
+	  rekeying for responders; ok reyk
+
+2010-12-22 17:53  reyk
+
+	* sbin/iked/: ca.c, iked.h, ikev2.c, ikev2_pld.c, pfkey.c, util.c:
+	  move and rename util.c:print_id() to ikev2.c:ikev2_print_id()
+	  because it is too specific to be in util.c.  This will allow to
+	  link util.c into ikectl later without all the other dependencies
+	  of pritn_id().
+
+2010-12-22 17:43  reyk
+
+	* sbin/iked/: Makefile, iked.h, imsg_util.c, util.c: split util.c
+	  into two files: imsg_util.c for ibuf/imsg stuff and util for
+	  everything else.  we might need to include util.c in ikectl
+	  later.
+
+	  sure mikeb@
+
+2010-12-22 17:30  mikeb
+
+	* sbin/iked/iked.8: ikev2 rfc was recently updated, so list the
+	  newer one;  ok reyk
+
+2010-12-22 16:40  reyk
+
+	* sbin/iked/: iked.conf.5, parse.y: Tweak the grammar a little bit
+	  by requiring a "bytes" keyword before the bytes value ("lifetime
+	  123 bytes 456" instead of "lifetime 123 456").
+
+2010-12-22 16:37  reyk
+
+	* sbin/iked/control.c: Fix a little control socket bug, as
+	  discussed with mikeb@
+
+2010-12-22 16:22  mikeb
+
+	* sbin/iked/: config.c, iked.conf.5, iked.h, ikev2.c, ikev2_msg.c,
+	  ikev2_pld.c, parse.y, pfkey.c, policy.c, types.h: child sa
+	  rekeying revamp plus numerous bugfixes; with suggestions and OK
+	  from reyk
+
+2010-12-21 14:28  mikeb
+
+	* sbin/iked/parse.y: Convert netmask from sockaddr to prefixlen
+	  correctly as noticed by axel rau, axel dot rau at chaos1 dot de.
+	  The actual convert functions are taken from bgpd(8).	OK reyk
+
+2010-12-21 13:24  mikeb
+
+	* sbin/iked/: control.c, crypto.c, eap.c: fixup log_warn and
+	  log_debug arguments;	ok reyk
+
+2010-12-01 12:01  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, util.c: Clarify the internal ibuf
+	  API: rename ibuf_copy() to ibuf_get() because it returns a new
+	  buffer from the internal read offset like stdio get functions do
+	  and not the same buffer when it is called multiple times.  Also
+	  rename the old ibuf_get() to ibuf_getdata() because it returns a
+	  "special" data type and it matches the stdio get* conventions.
+
+	  pointed out by mikeb@
+
+2010-11-29 22:49  markus
+
+	* sbin/iked/dh.c: make key exchange faster by not checking the
+	  predefined groups with DH_check() ok mikeb@, djm@
+
+2010-11-17 16:43  ckuethe
+
+	* sbin/iked/: iked.c, iked.h, parse.y: Allow the -D command line
+	  flag to actually define macros.  ok mikeb@ reyk@
+
+2010-11-08 12:16  mikeb
+
+	* sbin/iked/crypto.c: fixup number rounding;  ok reyk
+
+2010-10-14 19:35  dhill
+
+	* sbin/iked/eap.c: plug a tiny leak.
+
+	  ok mikeb@
+
+2010-10-11 14:25  sthen
+
+	* usr.sbin/ikectl/ikectl.8: and another one...
+	  s/10.4.5.6/10.3.4.5/, also from jy-p.
+
+2010-10-11 13:47  sthen
+
+	* usr.sbin/ikectl/ikectl.8: typo, s/10.1.2.3/10.2.3.4/, from jy-p
+
+2010-10-08 16:15  reyk
+
+	* usr.sbin/ikectl/: ikeca.c, ikeca.cnf: set the client/server
+	  certificate options with all the common keyusage and
+	  extendedkeyusage and nscerttype flags.  the ikectl CA can now be
+	  used with all kinds of other vpn tools in addition to iked and
+	  isakmpd.
+
+	  ok phessler@
+
+2010-10-08 15:45  jsg
+
+	* usr.sbin/ikectl/ikeca.c: check if a directory exists before
+	  trying to create it in the export case as well, spotted by mikeb
+
+2010-10-08 11:51  jsg
+
+	* usr.sbin/ikectl/ikectl.8: tweak for nroff
+
+2010-10-08 11:41  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.c: if non absolute paths are
+	  specified in install commands assume they are relative to /etc
+
+2010-10-08 10:13  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.8, ikectl.c, parser.c,
+	  parser.h: allow optional paths for the install commands so we can
+	  install into the isakmpd directory hierarchy for example.
+
+2010-10-08 07:45  reyk
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.8, ikectl.c, parser.c,
+	  parser.h: Allow to show certificate details (show ca x cert [y]).
+
+2010-10-07 15:17  jsg
+
+	* usr.sbin/ikectl/ikeca.c: only try to setup a passfile when
+	  creating a CA
+
+2010-10-07 13:30  reyk
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.8, ikectl.c, parser.c,
+	  parser.h: Allow to specify the export password on the command
+	  line (optionally, for scripting).  The "peer" argument now needs
+	  to be preceded with the "peer" keyword, eg. ... export peer
+	  10.1.1.1 instead of export 10.1.1.1.
+
+2010-10-07 13:28  jmc
+
+	* usr.sbin/ikectl/ikectl.c: sync usage();
+
+2010-10-07 12:33  reyk
+
+	* usr.sbin/ikectl/ikectl.8: nroff doesn't like long argument lists
+	  that work fine with mandoc.  split them into Xo/Xc blocks to make
+	  nroff happy again.
+
+2010-10-07 12:23  reyk
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.8, ikectl.c, parser.c,
+	  parser.h: - add a -q (quiet) command line option that will be
+	  used by ikeca to set openssl batch mode: don't ask for x509
+	  options, use the defaults.  - allow to specify the initial ca
+	  password on the command line to also make it scriptable.  - allow
+	  to create certificates for clientAuth or serverAuth only (eg.
+	  ikectl ca foo certificate bar server).  - cosmetics: move double
+	  declarations of ca_*() functions to parser.h.
+
+	  ok phessler@
+
+2010-10-07 10:56  phessler
+
+	* usr.sbin/ikectl/ikeca.c: set saner permissions on the directory
+	  we export, so we don't change perms of /etc/iked when extracting
+
+	  OK jsg@
+
+2010-10-07 09:36  phessler
+
+	* usr.sbin/ikectl/: ikeca.c, ikeca.cnf: When we create a new CA,
+	  also create an empty (but valid) CRL list.  While here, set our
+	  used defaults in the config file.
+
+	  OK reyk@, jsg@
+
+2010-10-06 22:19  mikeb
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Retire Skipjack
+
+	  There's not much use for the declassified cipher from the 80's
+	  with a questionable license these days.  According to the FIPS
+	  drafts, Skipjack reaches its EOL in December 2010.
+
+	  The libc portion will be removed after the ports hackathon.
+
+	  djm and thib agree, no objections from deraadt Thanks to jsg for
+	  digging up FIPS drafts.
+
+2010-10-01 07:08  jmc
+
+	* usr.sbin/ikectl/ikectl.8: tweak previous;
+
+2010-09-30 14:25  mikeb
+
+	* sbin/iked/ca.c: promote openssl errors to the warning level; ok
+	  reyk
+
+2010-09-30 12:54  mikeb
+
+	* sbin/iked/ikev2_pld.c: check that there are transforms in the
+	  proposal before trying to actually parse it.
+
+	  ok reyk
+
+2010-09-30 10:36  reyk
+
+	* usr.sbin/ikectl/ikectl.8: Add jsg@ to the AUTHORS section of
+	  ikectl; he wrote the CA/PKI part.
+
+2010-09-30 10:34  mikeb
+
+	* sbin/iked/: crypto.c, ikev2_msg.c: disable padding correctly.
+	  therefore we no longer need to supply additional space in the
+	  buffer and just pad input length up to the block size.
+	  finalization is not needed for properly padded data.
+
+	  kills a bunch of XXX's and an annoying error from openssl.
+
+	  also, check a result from CipherUpdate while here.
+
+	  ok reyk
+
+2010-09-30 10:32  reyk
+
+	* sbin/iked/iked.8: More information about creating and maintaining
+	  the PKI with a link to ikectl(8).
+
+2010-09-30 10:03  reyk
+
+	* usr.sbin/ikectl/ikectl.8: Add some examples about using the CA
+	  commands to create and install the CA and peers certificates.
+
+	  With input from mikeb@
+
+2010-09-23 16:34  mikeb
+
+	* sys/netinet/ip_ipsp.h: remove m_pad in favor of m_inject as it's
+	  equivalent to m_inject with an offset equal to the actual data
+	  length.
+
+	  ok henning blambert
+
+2010-09-23 11:42  mikeb
+
+	* sbin/iked/: iked.conf.5, parse.y, pfkey.c: support for aes-gcm
+
+	  OK reyk
+
+2010-09-22 12:48  mikeb
+
+	* sys/net/pfkeyv2.h: Add AES-GCM Transform Identifiers as specified
+	  by IANA in RFC 4106 and 4543.
+
+	  Please note that although IKEv1 and IKEv2 identifiers are
+	  different for ESP_NULL_AUTH_AES-GMAC (SADB_X_EALG_AESGMAC), we
+	  use the IKEv2 one only (which is 21).  ipsecctl(8) will be taught
+	  to handle exported SA correctly.
+
+2010-09-22 09:12  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c: support
+	  INVALID_KE_PAYLOAD notification sent by the responder in case the
+	  initiator chose wrong D-H group.  in this case we throw away our
+	  SA and start over with a proper group.
+
+	  makes iked work as an initiator with strongswan/charon without
+	  any specific "ikesa" (phase 1) configuration.
+
+	  ok reyk
+
+2010-09-20 18:06  mikeb
+
+	* sbin/iked/eap.c: fixup length of an eap identity message payload.
+
+	  ok reyk
+
+2010-09-16 09:27  mikeb
+
+	* sbin/iked/proc.c: pass proper argument to the proc_sig_handler
+	  and check env for NULL before dereferencing.	fixes an annoying
+	  crash.
+
+	  ok reyk
+
+2010-09-09 13:06  mikeb
+
+	* sbin/iked/: iked.h, ikev2.c, parse.y: - allow esp proposals
+	  without integrity and ah proposals without   encryption;
+
+	  - add additional nonce length field, use that for the ciphers
+	  that	 require additional keying material;
+
+	  - setup right flow direction depending on the mode: fixes up iked
+	    working as an initiator against charon.
+
+	  tested by me and jsg.
+
+	  ok reyk
+
+2010-08-03 18:42  henning
+
+	* sbin/iked/parse.y: fix linecount bug with comments spanning
+	  multiple lines problem reported with the obvious fix for bgpd by
+	  Sebastian Benoit <benoit-lists at fb12.de>, also PR 6432 applied
+	  to all the others by yours truly. ok theo isn't it amazing how
+	  far this parser (and more) spread?
+
+2010-07-29 14:41  jsg
+
+	* sbin/iked/ikev2.c: some error cases returned 01 when they should
+	  have been returning -1 spotted by Mike Belopuhov.
+
+2010-07-28 15:45  jsg
+
+	* sbin/iked/ikev2_pld.c: Change back to the pre rev 1.11 behaviour
+	  of not treating unexpected id payloads as errors.  Lets interop
+	  with strongSwan which sends both IDi and IDr work again.
+
+2010-07-22 17:16  jsg
+
+	* sbin/iked/parse.y: Don't deref a NULL pointer if tap or tag are
+	  not specified in the config file.
+
+2010-07-20 16:28  deraadt
+
+	* sbin/iked/ikev2.c: two iterators should be u_int; ok jsg
+
+2010-07-09 16:58  reyk
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Add support for using
+	  IPsec in multiple rdomains.
+
+	  This allows to run isakmpd/iked/ipsecctl in multiple rdomains
+	  independently (with "route exec"); the kernel will pickup the
+	  rdomain from the process context of the pfkey socket and load the
+	  flows and SAs into the matching rdomain encap routing table.	The
+	  network stack also needs to pass the rdomain to the ipsec stack
+	  to lookup the correct rdomain that belongs to an
+	  interface/mbuf/... You can now run individual IPsec configs per
+	  rdomain or create IPsec VPNs between multiple rdomains on the
+	  same machine ;).  Note that a primary enc(4) in addition to enc0
+	  interface is required per rdomain, eg. enc1 rdomain 1.
+
+	  Test by some people, mostly on existing "rdomain 0" setups.  Was
+	  in snaps for some days and people didn't complain.
+
+	  ok claudio@ naddy@
+
+2010-07-03 16:59  reyk
+
+	* sbin/iked/: ikev2.c, ikev2.h, ikev2_pld.c, policy.c: Better
+	  non-debug logging messages when a session is established/closed.
+
+2010-07-01 02:15  reyk
+
+	* sbin/iked/: iked.conf.5, iked.h, parse.y, pfkey.c: Add support
+	  for the tap extension (ikev2 ... tap "enc1") that will tell the
+	  kernel to send all IPsec traffic for derived SAs to the specified
+	  enc(4) interface instead of enc0.
+
+2010-07-01 02:09  reyk
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Allow to specify an
+	  alternative enc(4) interface for an SA.  All traffic for this SA
+	  will appear on the specified enc interface instead of enc0 and
+	  can be filtered and monitored separately. This will allow to
+	  group individual ipsec policies to virtual interfaces and
+	  simplifies monitoring and pf filtering with many ipsec policies a
+	  lot.
+
+	  This diff includes the following changes: - Store the enc
+	  interface unit (default 0) in the TDB of an SA and pass it to the
+	  enc_getif() lookup when running the bpf or pf_test() handlers.  -
+	  Add the pfkey SADB_X_EXT_TAP extension to communicate the encX
+	  interface unit for a specified SA between userland and kernel.  -
+	  Update enc(4) again to use an allocate array instead of the TAILQ
+	  to lookup the matching enc interface in enc_getif() quickly.
+
+	  Discussed with many, tested by a few, will need more testing &
+	  review.
+
+	  ok deraadt@
+
+2010-06-29 21:04  reyk
+
+	* sbin/iked/: ca.c, iked.h, types.h, util.c: add code to lookup the
+	  RSA public keys in /etc/iked/pubkeys/ as an alternative to X.509
+	  CA verification.  this will be needed to support public key
+	  authentication like isakmpd does;  a few bits are still missing.
+
+2010-06-29 19:38  reyk
+
+	* sbin/iked/dh.c: Add missing frees.
+
+2010-06-27 05:49  reyk
+
+	* sbin/iked/: ca.c, iked.h, ikev2_pld.c: When a peer requests a
+	  certificate from the local gateway, we first lookup a cert from
+	  /etc/iked/certs/ that is signed by a requested CA.  As a second
+	  step we also compare the subjectAltName of any found certificate
+	  now to match the local srcid; this allows to have multiple certs
+	  for the same CA but different srcids in the certs/ directory but
+	  enforces that the subjectAltName has to be set correctly.
+
+	  requested by jsg@
+
+2010-06-27 05:40  reyk
+
+	* sbin/iked/ikev2.c: fix possible double free of the initiator cert
+
+2010-06-27 01:37  reyk
+
+	* sbin/iked/ca.c: fix the length check for ASN1_ID Ids.
+
+2010-06-27 01:11  reyk
+
+	* sbin/iked/ca.c: Verify that the subjectAltName extension is
+	  present and matches the peer Id if the Id type is not ASN1_DN.
+	  If it is ASN1_DN, compare it with the certificate subjectName
+	  (DN).  This prevents the peer from using an arbitrary peer Id (it
+	  is signed by the CA in the cert) and qualifies the optional pf
+	  tag.
+
+2010-06-27 01:03  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c: Instead of
+	  modifying and fiddling with the IKE SA in the payload parsing
+	  routines directly, first parse the message and save the parsed
+	  elements in the temporary message struct before validating the
+	  information and taking any other actions on the actual SA.  This
+	  needs more testing, but is the cleaner and better approach.
+
+2010-06-27 00:32  reyk
+
+	* sbin/iked/policy.c: print the required bits as a string
+
+2010-06-27 00:32  reyk
+
+	* sbin/iked/util.c: cycle static buffers in print_bits()
+
+2010-06-26 19:54  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c: revert the files that
+	  have been accidentally committed with my previous parse.y change.
+
+2010-06-26 19:48  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, parse.y: mixing any
+	  (AF_UNSPEC) with AF_INET/INET6 is not an address family mismatch
+
+2010-06-26 18:32  reyk
+
+	* sbin/iked/: ca.c, iked.conf.5, iked.h, ikev2.c, ikev2.h,
+	  ikev2_pld.c, parse.y, pfkey.c, util.c: Include the Id type in the
+	  generated SA tag that is passed to the kernel, just like isakmpd
+	  does it.  In difference to isakmpd, the Id type is printed in
+	  capital letters, eg. FQDN/foo.example.com, because it is using
+	  the existing print_map() API.  For consistency, rename a few Id
+	  types in grammar and code from the RFC-names to the OpenBSD-style
+	  names; including RFC822_ADDR to UFQDN, IPV4_ADDR to just IPV4,
+	  DER_ASN1_DN to ASN1_DN etc.
+
+2010-06-24 20:15  reyk
+
+	* sbin/iked/: ca.c, control.c, iked.c, ikev1.c, log.c: unbreak the
+	  ikectl log verbose/brief commands.
+
+2010-06-23 19:28  jsg
+
+	* usr.sbin/ikectl/ikeca.c: fix the permissions on directories
+	  inside the exported tarball in the cert case.
+
+2010-06-23 17:10  jsg
+
+	* usr.sbin/ikectl/ikeca.c: More appropriate contents for the
+	  exported ca tarball.
+
+2010-06-23 16:01  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.8, ikectl.c, parser.c,
+	  parser.h: Add a ca export command for EAP mode where we only
+	  require the CA cert, and make both export commands optionally
+	  take an argument that will be added to a peer.txt file in the
+	  exported output.   Additionally include any site specific notes
+	  from /usr/share/iked if present.
+
+	  man page bits and help with the parser from reyk
+
+2010-06-23 11:26  reyk
+
+	* sbin/iked/: dh.c, dh.h, iked.conf.5, ikev2.h, parse.y: rename the
+	  ec groups to either ec2n or ecp (eg. ec155 -> ec2n155 or ec521 ->
+	  ecp521).  this matches the common naming for ec groups better.
+
+2010-06-23 10:49  reyk
+
+	* sbin/iked/: dh.c, dh.h, ikev2.c: further cleanup of the dh code:
+	  - remove dh_selftest(), this should go into regress somewhere -
+	  remove any iked-specific dependencies from dh.c/dh.h which allows
+	  us to use this code in other projects as well.
+
+2010-06-21 10:48  jsg
+
+	* usr.sbin/ikectl/ikeca.c: use the full path to zip
+
+2010-06-15 08:41  jsg
+
+	* usr.sbin/ikectl/ikectl.8: fix an mdoc macro
+
+2010-06-15 00:41  reyk
+
+	* sbin/iked/parse.y: fix keyword sort order
+
+2010-06-15 00:34  reyk
+
+	* sbin/iked/policy.c: only compare the SPIi in the SA tree
+
+2010-06-14 23:23  reyk
+
+	* sbin/iked/ikev2_msg.c: check if cert is available and valid
+
+2010-06-14 23:14  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c, policy.c: Initiator
+	  mode with certificates;  needs more work but works.
+
+2010-06-14 21:12  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c, pfkey.c,
+	  policy.c: Initial support for initiator mode which allows to run
+	  iked as a "client" or to configure iked to iked (OpenBSD to
+	  OpenBSD) IKEv2 VPNs.
+
+	  It currently only supports psk (pre-shared keys) and no
+	  certificates, doesn't do any rekeying or SA timeouts, and needs
+	  more cleanup.  So it is not quite production ready yet - but
+	  ready for simple tests...
+
+2010-06-14 18:39  reyk
+
+	* sbin/iked/parse.y: the ikesa prf config option is currently
+	  broken
+
+2010-06-14 17:41  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikectl.8, ikectl.c, parser.c,
+	  parser.h: Add commands to create/delete/install/import keys
+	  without involving certificates as suggested by reyk and don't
+	  recreate private keys if a key already exists.
+
+	  ok reyk@
+
+2010-06-14 16:31  reyk
+
+	* sbin/iked/crypto.c: fix block length for AES
+
+2010-06-14 14:17  reyk
+
+	* sbin/iked/ikev2.c: fix EAP responder mode
+
+2010-06-14 14:03  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_pld.c: NAT detection again:
+	  make it work in initiator and responder mode
+
+2010-06-14 12:06  reyk
+
+	* sbin/iked/policy.c: remove policy lookup debug message
+
+2010-06-14 12:05  reyk
+
+	* sbin/iked/: ikev2.c, ikev2_pld.c: NAT detection with SPIr is
+	  always 0
+
+2010-06-14 11:33  reyk
+
+	* sbin/iked/: iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c, policy.c,
+	  util.c: restructure code a bit to move closer to initiator mode:
+	  - split responder/initiator- specific code into different
+	  functions and use shared functions for common stuff.	- first
+	  parse the received message and store information in the temporary
+	  message struct instead of modifying the ike sa in the parsing
+	  code directly.
+
+2010-06-14 08:55  reyk
+
+	* sbin/iked/: iked.h, ikev1.c, ikev2.c, ikev2_msg.c, util.c:
+	  cleanup messages and parsed information correctly
+
+2010-06-14 08:32  reyk
+
+	* sbin/iked/ikev2.h: add define for saproto 0
+
+2010-06-14 08:10  reyk
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, ikev2_msg.c, ikev2_pld.c,
+	  policy.c, timer.c: More code for initiator mode (not finished
+	  yet)
+
+2010-06-11 12:47  reyk
+
+	* sbin/iked/: Makefile, iked.h, ikev2.c, timer.c: add some
+	  infrastructure to support timers and initiator mode later.
+
+2010-06-11 10:15  jsg
+
+	* sbin/iked/: Makefile, ca.c: tweak the code slightly so we can
+	  remove -lssl
+
+	  ok reyk@
+
+2010-06-10 16:14  jsg
+
+	* usr.sbin/ikectl/: ikeca.c, ikeca.cnf, ikectl.8, ikectl.c,
+	  parser.c, parser.h: Add a command to revoke a certificate and
+	  generate a CRL; make the ca install command install the CRL as
+	  well.
+
+	  discussed with reyk@
+
+2010-06-10 14:24  reyk
+
+	* sbin/iked/iked.conf.5: don't print keywords as underlined
+	  arguments.
+
+2010-06-10 14:18  reyk
+
+	* sbin/iked/iked.c: update usage()
+
+2010-06-10 14:17  reyk
+
+	* sbin/iked/: iked.8, iked.c, parse.y, types.h: Add the -S flag
+	  which does the same as "set passive" but matches the isakmpd
+	  flag.
+
+2010-06-10 14:09  jsg
+
+	* sbin/iked/ca.c: move a bzero of the x509 store context higher up
+	  so the cert validation does something useful.
+
+	  ok reyk@
+
+2010-06-10 14:08  reyk
+
+	* sbin/iked/config.c, sbin/iked/control.c, sbin/iked/iked.c,
+	  sbin/iked/iked.conf.5, sbin/iked/iked.h, sbin/iked/ikev1.c,
+	  sbin/iked/ikev2.c, sbin/iked/parse.y, sbin/iked/pfkey.c,
+	  sbin/iked/types.h, usr.sbin/ikectl/ikectl.8,
+	  usr.sbin/ikectl/ikectl.c, usr.sbin/ikectl/parser.c,
+	  usr.sbin/ikectl/parser.h: add new commands: the couple/decouple
+	  commands will set loading of the learned flows and SAs to the
+	  kernel which is useful for testing and debugging. the
+	  active/passive commands are required to use iked with sasyncd(8);
+	  sasyncd just needs to call "ikectl active/passive" or send the
+	  appropriate imsg to support iked but this is not implemented yet.
+
+2010-06-10 12:06  reyk
+
+	* sbin/iked/: config.c, iked.h, ikev2.c, policy.c: Add another tree
+	  to lookup policy SAs by peer address.
+
+2010-06-10 12:04  reyk
+
+	* sbin/iked/pfkey.c: simplify the pfkey code by adding a
+	  pfkey_write() function
+
+2010-06-10 09:14  reyk
+
+	* sbin/iked/util.c: small fix for sockaddr_cmp()
+
+2010-06-10 08:29  reyk
+
+	* sbin/iked/: Makefile, ca.c, iked.h, ikev1.c, ikev2.c, ikev2.h,
+	  ikev2_msg.c, ikev2_pld.c: i don't like splitting source code in
+	  too many source files but ikev2.c has grown too large, so split
+	  it in 3 files and rename a few functions to organize the code a
+	  bit better.
+
+2010-06-10 07:35  reyk
+
+	* sbin/iked/policy.c: only call RB_REMOVE once when removing an SA.
+
+2010-06-07 14:15  jsg
+
+	* sbin/iked/iked.8, sbin/iked/types.h, usr.sbin/ikectl/ikeca.c:
+	  switch iked pki files to /etc/iked, discussed with reyk.
+
+2010-06-07 10:07  jmc
+
+	* sbin/iked/: iked.8, iked.c: various small tweaks; ok reyk
+
+2010-06-07 08:40  jmc
+
+	* sbin/iked/iked.conf.5: various tweaks; ok reyk
+
+2010-06-04 13:34  jsg
+
+	* usr.sbin/ikectl/ikeca.c: Install the cert as well as the keys and
+	  make certs world readable as suggested by reyk@
+
+2010-06-04 09:51  reyk
+
+	* sbin/iked/: ikev2.c, pfkey.c: Fix NAT-T detection to enable UDP
+	  encapsulation.  It was done before, but not in the right order to
+	  run the IKEv2 NAT detection and check the source port of the last
+	  IKE message which should be the NAT-T port 4500.
+
+	  Tested with iked running on sparc64 and a NAT'ed windows box.
+
+2010-06-03 21:57  reyk
+
+	* sbin/iked/iked.conf.5: manpage tweaks
+
+2010-06-03 20:28  reyk
+
+	* sbin/iked/types.h: Add a new _iked user with uid 101 instead of
+	  (ab)using the _isakmpd user.
+
+	  ok deraadt@
+
+2010-06-03 17:05  reyk
+
+	* sbin/iked/Makefile: remove my BINDIR override, pointed out by
+	  deraadt@
+
+2010-06-03 16:49  reyk
+
+	* usr.sbin/ikectl/: ikeca.c, ikeca.cnf, ikectl.8, ikectl.c,
+	  parser.c, parser.h: Import iked, a new implementation of the
+	  IKEv2 protocol.
+
+	  iked(8) is an automatic keying daemon for IPsec, like isakmpd(8),
+	  that IPsec creates flows and SAs automatically.  Unlike isakmpd,
+	  iked(8) implements the newer IKEv2 protocol instead of
+	  IKEv1/ISAKMP.  The daemon is still work-in-progress and not
+	  enabled in the builds, but is already able to establish IKEv2
+	  sessions with some other IKEv2 implementations as a responder.
+
+	  with lots of help and debugging by jsg@ ok deraadt@
+
+2010-06-03 16:41  reyk
+
+	* sbin/iked/Makefile, sbin/iked/ca.c, sbin/iked/chap_ms.c,
+	  sbin/iked/chap_ms.h, sbin/iked/config.c, sbin/iked/control.c,
+	  sbin/iked/crypto.c, sbin/iked/dh.c, sbin/iked/dh.h,
+	  sbin/iked/eap.c, sbin/iked/eap.h, sbin/iked/genmap.sh,
+	  sbin/iked/iked.8, sbin/iked/iked.c, sbin/iked/iked.conf.5,
+	  sbin/iked/iked.h, sbin/iked/ikev1.c, sbin/iked/ikev2.c,
+	  sbin/iked/ikev2.h, sbin/iked/log.c, sbin/iked/parse.y,
+	  sbin/iked/pfkey.c, sbin/iked/policy.c, sbin/iked/proc.c,
+	  sbin/iked/types.h, sbin/iked/util.c, usr.sbin/ikectl/Makefile:
+	  Import iked, a new implementation of the IKEv2 protocol.
+
+	  iked(8) is an automatic keying daemon for IPsec, like isakmpd(8),
+	  that IPsec creates flows and SAs automatically.  Unlike isakmpd,
+	  iked(8) implements the newer IKEv2 protocol instead of
+	  IKEv1/ISAKMP.  The daemon is still work-in-progress and not
+	  enabled in the builds, but is already able to establish IKEv2
+	  sessions with some other IKEv2 implementations as a responder.
+
+	  with lots of help and debugging by jsg@ ok deraadt@
+
+2010-05-11 09:36  claudio
+
+	* sys/netinet/ip_ipsp.h: Massiv cleanup of the gif(4) mess. Move
+	  encapsulation into gif_output() where it is not necessary to
+	  guess protocols by looking at the first nibble.  in_gif_output()
+	  will encapsulate the packet but not send it. Because of etherip
+	  support and the way the bridge works a minimal hack is needed in
+	  gif_start() to ensure that the bridged packets are encapsulated
+	  as well.  This actually started with the idea to add MPLS support
+	  but that turned out to be not as simple as in the gre(4) case.
+	  Tested by myself (IP, IPv6, etherip, MPLS), sthen@ (IP, IPv6),
+	  naddy (IPv6) OK sthen@
+
+2010-05-07 13:33  claudio
+
+	* sys/netinet/ip_ipsp.h: Start cleaning up the mess called
+	  rtalloc*. Kill rtalloc2, make rtalloc1 accept flags for report
+	  and nocloning. Move the rtableid into struct route (with a minor
+	  twist for now) and make a few more codepathes rdomain aware.
+	  Appart from the pf.c and route.c bits the diff is mostly
+	  mechanical.  More to come...	OK michele, henning
+
+2010-01-10 12:43  markus
+
+	* sys/netinet/ip_ipsp.h: Fix two bugs in IPsec/HMAC-SHA2: (1) use
+	  correct (message) block size of 128 byte (instead of 64
+	  bytes) for HMAC-SHA512/384 (RFC4634).  (2) RFC4868 specifies that
+	  HMAC-SHA-{256,384,512} is truncated to     nnn/2 bits, while we
+	  still use 96 bits. 96 bits have been	   specified in
+	  draft-ietf-ipsec-ciph-sha-256-00 while
+	  draft-ietf-ipsec-ciph-sha-256-01 changed it to 128 bits.
+
+	  WARNING: this change makes IPsec with SHA-256 (the default)
+	  incompatible with older OpenBSD versions and other
+	  IPsec-implementations that share this bug.
+
+	  ok+tests naddy, fries; requested by reyk/deraadt
+
+2009-11-13 20:54  claudio
+
+	* sys/netinet/ip_ipsp.h: Extend the protosw pr_ctlinput function to
+	  include the rdomain. This is needed so that the route and inp
+	  lookups done in TCP and UDP know where to look. Additionally
+	  in_pcbnotifyall() and tcp_respond() got a rdomain argument as
+	  well for similar reasons. With this tcp seems to be now fully
+	  rdomain save and no longer leaks single packets into the main
+	  domain.  Looks good markus@, henning@
+
+2009-06-02 21:28  blambert
+
+	* sys/netinet/ip_ipsp.h: Shuffle function declarations a bit;
+	  ipsp_kern doesn't actually exist, and tdb_hash is only used in
+	  ip_ipsp.c, so there's no need to declare it as extern in
+	  ip_ipsp.h
+
+	  ok claudio@ henning@
+
+2009-02-16 00:31  dlg
+
+	* sys/netinet/ip_ipsp.h: pfsync v5, mostly written at n2k9, but
+	  based on work done at n2k8.
+
+	  WARNING: THIS BREAKS COMPATIBILITY WITH THE PREVIOUS VERSION OF
+	  PFSYNC
+
+	  this is a new variant of the protocol and a large reworking of
+	  the pfsync code to address some performance issues. the single
+	  largest benefit comes from having multiple pfsync messages of
+	  different types handled in a single packet. pfsyncs handling of
+	  pf states is highly optimised now, along with packet parsing and
+	  construction.
+
+	  huggz for beck@ for testing.	huge thanks to mcbride@ for his
+	  help during development and for finding all the bugs during the
+	  initial tests.  thanks to peter sutton for letting me get credit
+	  for this work.
+
+	  ok beck@ mcbride@ "good." deraadt@
+
+2008-11-08 12:54  dlg
+
+	* sys/netinet/ip_ipsp.h: fix macros up so they use the do { } while
+	  (/* CONSTCOND */ 0) idiom
+
+	  ok deraadt@ otto@
+
+2006-11-24 13:52  reyk
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: add support to tag ipsec
+	  traffic belonging to specific IKE-initiated phase 2 traffic. this
+	  allows policy-based filtering of encrypted and unencrypted ipsec
+	  traffic with pf(4). see ipsec.conf(5) and isakmpd.conf(5) for
+	  details and examples.
+
+	  this is work in progress and still needs some testing and
+	  feedback, but it is safe to put it in now.
+
+	  ok hshoexer@
+
+2006-06-30 21:41  deraadt
+
+	* sys/netinet/ip_ipsp.h: htonq() is not used, at all
+
+2006-04-27 02:19  tedu
+
+	* sys/netinet/ip_ipsp.h: use underscore variants of _BYTE_ORDER
+	  macros which are always defined ok deraadt millert
+
+2006-01-13 10:11  mpf
+
+	* sys/netinet/ip_ipsp.h: Path MTU discovery for NAT-T.	OK markus@,
+	  "looks good" hshoexer@
+
+2005-11-24 12:08  pedro
+
+	* sys/netinet/ip_ipsp.h: Remove kernfs, okay deraadt@.
+
+2005-05-28 15:10  ho
+
+	* sys/netinet/ip_ipsp.h: Add SA replay counter synchronization to
+	  pfsync(4). Required for IPsec failover gateways. ok mcbride@,
+	  "looks good" hshoexer@
+
+2005-05-27 19:32  hshoexer
+
+	* sys/netinet/ip_ipsp.h: wrap some comments
+
+2005-05-27 15:29  hshoexer
+
+	* sys/net/pfkeyv2.h: Use export_flow() to wrap policies retrieved
+	  via sysctl in pfkey message
+
+	  ok ho markus
+
+2005-05-25 05:47  markus
+
+	* sys/net/pfkeyv2.h: AESCTR support for ESP (RFC 3686); ok hshoexer
+
+2005-04-04 22:18  hshoexer
+
+	* sys/net/pfkeyv2.h: Add sysctl for dumping the SPD ok deraadt, ok
+	  markus some time ago
+
+2004-11-26 18:02  markus
+
+	* sys/net/pfkeyv2.h: implement
+	  net.key.v2.sadb_dump.{unspec,esp,ah,...} sysctl subtree and use
+	  sysctl for 'ipsecadm show'; ok deraadt
+
+2004-11-19 10:11  hshoexer
+
+	* sys/netinet/ip_ipsp.h: Plug memory leak.  Found by pat@.  Thanks!
+
+	  ok myself markus@
+
+2004-08-10 16:17  ho
+
+	* sys/net/pfkeyv2.h: Add SADB_X_EXT_LIFETIME_LASTUSE for use with
+	  isakmpd/DPD, adding this extends the bitmap to 64bits. Also
+	  repair SADB_GET. hshoexer@ ok.
+
+2004-06-05 23:11  niklas
+
+	* sys/netinet/ip_ipsp.h: Merge with the trunk
+
+2004-04-14 20:10  markus
+
+	* sys/netinet/ip_ipsp.h: simpler ipsp_aux_match() API; ok henning,
+	  hshoexer
+
+2004-02-19 10:57  niklas
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Merge of current from two
+	  weeks agointo the SMP branch
+
+2004-01-27 09:27  markus
+
+	* sys/net/pfkeyv2.h: don't convert tcpmd5 to ip-over-ip in
+	  SADB_X_GETSPROTO; from hshoexer
+
+2004-01-22 14:38  markus
+
+	* sys/netinet/ip_ipsp.h: add gettdbbysrcdst(), just like gettdb(),
+	  but compares tdb_src as well; ok mcbride@
+
+2003-12-10 07:22  itojun
+
+	* sys/netinet/ip_ipsp.h: de-register.  deraadt ok
+
+2003-12-02 23:16  markus
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: UDP encapsulation for ESP
+	  in transport mode (draft-ietf-ipsec-udp-encaps-XX.txt) ok
+	  deraadt@
+
+2003-07-24 09:59  itojun
+
+	* sys/net/pfkeyv2.h: conform to RFC2367 on SADB_xx naming (local
+	  name must be prefixed with SADB_X_xx)
+
+2003-07-24 08:03  itojun
+
+	* sys/netinet/ip_ipsp.h: hmac-sha2-{256,384,512} support in AH/ESP
+	  auth.  markus ok
+
+2003-05-19 22:40  tedu
+
+	* sys/netinet/ip_ipsp.h: sync
+
+2003-05-19 22:29  tedu
+
+	* sys/net/pfkeyv2.h: sync
+
+2003-05-13 19:36  ho
+
+	* sys/netinet/ip_ipsp.h: Sync the SMP branch to -current. This
+	  includes moving to ELF.
+
+2003-05-06 07:28  deraadt
+
+	* sys/netinet/ip_ipsp.h: string cleaning; tedu ok
+
+2003-03-28 00:41  niklas
+
+	* sys/net/pfkeyv2.h: Sync the SMP branch with 3.3
+
+2003-03-28 00:06  niklas
+
+	* sys/netinet/ip_ipsp.h: Sync the SMP branch with 3.3
+
+2003-02-24 21:34  jason
+
+	* sys/net/pfkeyv2.h: SADB_X_CALG_MAX is supposed to be the highest
+	  numbered supported algorithm (prevents a crash in the debugging
+	  code in pfkeyv2_parsemessage.c)
+
+2003-02-16 21:30  deraadt
+
+	* sys/net/pfkeyv2.h: KNF
+
+2003-02-16 19:54  jason
+
+	* sys/net/pfkeyv2.h: KNF
+
+2003-02-15 19:21  jason
+
+	* sys/net/pfkeyv2.h: s/LSZ/LZS (consistent with linux and isakmpd
+	  *.cst)
+
+2002-10-29 00:36  art
+
+	* sys/netinet/ip_ipsp.h: sync to -current
+
+2002-06-11 03:30  art
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Sync UBC branch to
+	  -current
+
+2002-06-09 16:26  itojun
+
+	* sys/netinet/ip_ipsp.h: whitespace
+
+2002-06-07 04:47  ho
+
+	* sys/net/pfkeyv2.h: Add flow type arg to import_flow()
+
+2002-05-31 02:39  angelos
+
+	* sys/netinet/ip_ipsp.h: New fields in policy and TDB.
+
+2002-05-31 01:39  angelos
+
+	* sys/net/pfkeyv2.h: import_flow() prototype
+
+2002-03-28 14:56  niklas
+
+	* sys/netinet/ip_ipsp.h: Merge in -current from roughly a week ago
+
+2002-03-14 01:27  millert
+
+	* sys/netinet/ip_ipsp.h: First round of __P removal in sys
+
+2002-03-06 02:15  niklas
+
+	* sys/net/pfkeyv2.h: Merge in trunk
+
+2001-12-18 23:07  deraadt
+
+	* sys/net/pfkeyv2.h: NRL license cleaning
+
+2001-10-31 03:29  nate
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Sync the SMP branch to
+	  something just after 3.0
+
+2001-08-19 06:31  angelos
+
+	* sys/netinet/ip_ipsp.h: Pass the interface (if any) to
+	  ipip_input(), so it can be used in BPF. Closes PR 2000.
+
+2001-07-05 08:42  angelos
+
+	* sys/netinet/ip_ipsp.h: Style
+
+2001-07-05 08:38  angelos
+
+	* sys/net/pfkeyv2.h: $OpenBSD$ tag
+
+2001-07-05 08:31  jjbg
+
+	* sys/netinet/ip_ipsp.h: IPComp itself (include files). angelos@
+	  ok.
+
+2001-07-05 08:27  jjbg
+
+	* sys/net/pfkeyv2.h: Include files for IPComp support. angelos@ ok.
+
+2001-07-04 10:54  niklas
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Merge in -current from
+	  two days ago in the SMP branch.  As usual with merges, they do
+	  not indicate progress, so do not hold your breath for working
+	  SMP, and do not mail me and ask about the state of it.  It has
+	  not changed.	There is work ongoing, but very, very slowly.  The
+	  commit is done in parts as to not lock up the tree in too big
+	  chunks at a time.
+
+2001-06-27 04:44  angelos
+
+	* sys/netinet/ip_ipsp.h: When determining whether there's a pending
+	  acquire wrt a policy, look at the acquires associated with the
+	  policy only.
+
+2001-06-27 04:39  angelos
+
+	* sys/netinet/ip_ipsp.h: Also link acquire state to the relevant
+	  IPsec policy.
+
+2001-06-27 01:34  angelos
+
+	* sys/netinet/ip_ipsp.h: Don't cache packets that hit policies --
+	  we'll do that at the PCB for local packets.
+
+2001-06-26 18:56  angelos
+
+	* sys/netinet/ip_ipsp.h: Use pool(9) for IPsec policy structures.
+
+2001-06-26 18:34  angelos
+
+	* sys/netinet/ip_ipsp.h: Keep the PFKEY sequence number at the TDB,
+	  plus a little bit of KNF
+
+2001-06-26 03:52  angelos
+
+	* sys/netinet/ip_ipsp.h: KNF
+
+2001-06-25 23:18  beck
+
+	* sys/netinet/ip_ipsp.h: damn greeks desperate for commits...
+
+2001-06-25 23:08  angelos
+
+	* sys/netinet/ip_ipsp.h: KNF
+
+2001-06-25 05:11  angelos
+
+	* sys/netinet/ip_ipsp.h: Copyright.
+
+2001-06-24 21:52  mickey
+
+	* sys/netinet/ip_ipsp.h: use new timeouts for spd expirations (hmm
+	  cvs did not pick up the file); ho@ ok
+
+2001-06-24 18:22  provos
+
+	* sys/netinet/ip_ipsp.h: path mtu discovery for ipsec.	on
+	  receiving a need fragment icmp match against active tdb and store
+	  the ipsec header size corrected mtu
+
+2001-06-24 18:15  provos
+
+	* sys/netinet/ip_ipsp.h: remove whitespace
+
+2001-06-09 06:16  angelos
+
+	* sys/net/pfkeyv2.h: By popular demand, protect from multiple
+	  inclusion, and fix to use the same naming style.
+
+2001-06-08 19:40  angelos
+
+	* sys/netinet/ip_ipsp.h: IPSP_POLICY_STATIC flag.
+
+2001-06-08 19:37  angelos
+
+	* sys/net/pfkeyv2.h: Flag field for flows.
+
+2001-06-08 02:53  angelos
+
+	* sys/net/pfkeyv2.h: Fork out some of the code in pfkeyv2.c to
+	  pfkeyv2_convert.c, to make the former more managable/readable (an
+	  almost impossible task).
+
+2001-06-07 16:19  angelos
+
+	* sys/netinet/ip_ipsp.h: Simplify SPD logic (and correct some input
+	  cases).
+
+2001-06-05 00:17  niklas
+
+	* sys/net/pfkeyv2.h: Make our pfkeyv2.h more RFC2367 compliant.
+	  Also fix some backwards compatibility problems in isakmpd, at
+	  least 2.8 stable can compile current isakmpd now.  angelos@ ok
+
+2001-06-01 07:56  angelos
+
+	* sys/netinet/ip_ipsp.h: ipsp_parse_headers() goes down a list of
+	  IPv4/IPv6/AH/ESP headers and creates a tag for each of the ESP/AH
+	  headers. This will be used by IPsec-aware NIC device drivers that
+	  need to notify IPsec that crypto processing has already been
+	  done.
+
+	  There is an excessive amount of m_copydata() calls used by this
+	  routine, but there's no way around it that I can think of.
+
+2001-06-01 00:09  angelos
+
+	* sys/netinet/ip_ipsp.h: The IPsec-aware NIC cards don't pass the
+	  ICV for later verification by the stack; that means, if we have a
+	  tag it means the ICV was successfully verified and we don't need
+	  to do anything else. As well, we don't need any other status
+	  information from the NIC.
+
+2001-05-31 23:45  angelos
+
+	* sys/netinet/ip_ipsp.h: Structure for NIC IPsec processing status
+	  reports.
+
+2001-05-30 18:22  angelos
+
+	* sys/net/pfkeyv2.h: Add comments on what the credential types are.
+
+2001-05-30 16:44  angelos
+
+	* sys/net/pfkeyv2.h: MBOX->USERFQDN, noticed by markus@
+
+2001-05-30 16:43  angelos
+
+	* sys/netinet/ip_ipsp.h: IPSP_IDENTITY_MBOX -> IPSP_IDENTITY_FQDN,
+	  and print type of creds/auth in kernfs
+
+2001-05-30 12:24  angelos
+
+	* sys/netinet/ip_ipsp.h: Forgot to update ipsec_output_done()
+
+2001-05-30 12:20  angelos
+
+	* sys/netinet/ip_ipsp.h: With the tags, we don't need to abuse the
+	  IPsec API to do socket keying.
+
+2001-05-30 11:27  angelos
+
+	* sys/net/pfkeyv2.h: Import/export authentication information for
+	  SA.
+
+2001-05-30 11:14  angelos
+
+	* sys/netinet/ip_ipsp.h: Keep track of remote authentication
+	  material (like public key) as well.
+
+2001-05-30 10:55  angelos
+
+	* sys/netinet/ip_ipsp.h: Fields to store local auth information in
+	  policy and TDB.
+
+2001-05-30 10:46  angelos
+
+	* sys/net/pfkeyv2.h: Add AUTH payload.
+
+2001-05-29 01:12  angelos
+
+	* sys/netinet/ip_ipsp.h: Fields on TDB for last used and last
+	  SKIPCRYPTO status change.
+
+2001-05-29 01:03  angelos
+
+	* sys/netinet/ip_ipsp.h: Add ipsp_skipcrypto_{mark,unmark}()
+
+2001-05-27 05:17  angelos
+
+	* sys/netinet/ip_ipsp.h: Remove ipsp_copy_ident() prototype.
+
+2001-05-27 03:48  angelos
+
+	* sys/netinet/ip_ipsp.h: Change prototype of ipsp_common_input_cb()
+	  to also accept a packet tag as the last argument.
+
+2001-05-21 06:01  angelos
+
+	* sys/netinet/ip_ipsp.h: SKIPCRYPTO flag
+
+2001-05-21 03:27  angelos
+
+	* sys/netinet/ip_ipsp.h: Cosmetic.
+
+2001-05-21 03:23  angelos
+
+	* sys/netinet/ip_ipsp.h: Use int16_t for the type and length of
+	  ipsec_ref objects.
+
+2001-05-21 03:02  angelos
+
+	* sys/netinet/ip_ipsp.h: Use a reference-counted structure for
+	  IPsec IDs and credentials, so we can cheaply keep copies of them
+	  at the PCB. ok deraadt@
+
+2001-05-14 22:40  niklas
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: merge in approximately
+	  2.9 into SMP branch
+
+2001-05-05 00:33  angelos
+
+	* sys/net/pfkeyv2.h: Use the new M_* malloc types
+
+2001-05-05 00:31  angelos
+
+	* sys/netinet/ip_ipsp.h: Check that SAs also match on the
+	  credentials and the IDs. This means that flows with different
+	  source/destination ID requirements will cause different SAs to be
+	  established by IKE (or whatever other protocol). Also, use the
+	  new data types for allocated memory.
+
+2001-05-01 18:31  fgsch
+
+	* sys/netinet/ip_ipsp.h: Fix tcp_signature_tdb_input decl; kernel
+	  compiles again if TCP_SIGNATURE option is used. Note that this
+	  does not work.
+
+2001-04-14 00:30  angelos
+
+	* sys/netinet/ip_ipsp.h: Minor changes, preparing for real
+	  socket-attached TDBs; also, more information will be stored in
+	  the TDB. ok ho@ provos@
+
+2001-03-28 20:03  angelos
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Allow tdbi's to appear in
+	  mbufs throughout the stack; this allows security properties of
+	  the packets to be pushed up to the application (not done yet).
+	  Eventually, this will be turned into a packet attributes
+	  framework.
+
+	  Make sure tdbi's are free'd/cleared properly whenever drivers (or
+	  NFS) does weird things with mbufs.
+
+2001-03-27 14:45  art
+
+	* sys/netinet/ip_ipsp.h: Fix a problem with how TDB timeouts were
+	  used in pfkeyv2.  When we allocated a tdb we did a timeout_add
+	  before a timeout_set.  This was a problem in itself, but it
+	  shouldn't hurt too much.  What did hurt was that we did a
+	  timeout_set after the timeout_add, timeout_set marked the timeout
+	  as not being on the timeout list and if we did a timeout_del (or
+	  timeout_add) later (before the timeout fired) we ended up with a
+	  chunk of freed memory on the timeout queue or maybe even dangling
+	  pointers (or a circular list).
+
+	  This should probably cure the timeout queue corruption some
+	  people were seeing lately.
+
+2001-03-15 06:31  mickey
+
+	* sys/netinet/ip_ipsp.h: convert SA expirations to the new
+	  timeouts.  simplifies expirations handling a lot.
+	  tdb_exp_timeout and tdb_soft_timeout are made consistant
+	  throughout the code to be a relative time offsets, just like
+	  first_use timeouts.  tested on singlehost isakmpd setup.  lots of
+	  dangling spaces and tabs removed.  angelos@ ok
+
+2001-03-04 20:50  angelos
+
+	* sys/net/pfkeyv2.h: Import/export credentials from TDB.
+
+2001-03-04 20:34  angelos
+
+	* sys/netinet/ip_ipsp.h: Store peer's credentials in TDB.
+
+2001-02-28 04:16  angelos
+
+	* sys/netinet/ip_ipsp.h: Keep the last packet sent or received that
+	  matched an SPD entry, and retransmit if we eventually have an SA
+	  setup for that policy.
+
+2001-02-12 06:57  deraadt
+
+	* sys/netinet/ip_ipsp.h: putting #error into an include file is
+	  totally wrong
+
+2001-02-11 16:25  fgsch
+
+	* sys/netinet/ip_ipsp.h: If IPSEC is defined but not CRYPTO, spit
+	  an error; angelos@ ok
+
+2000-12-24 04:18  angelos
+
+	* sys/netinet/ip_ipsp.h: Extra argument in the function to
+	  tdb_walk(), indicating last TDB.
+
+2000-12-14 18:07  provos
+
+	* sys/net/pfkeyv2.h: sync with pfkey rfc.  you need to rebuild
+	  ipsecadm and isakmpd after this.  okay angelos@
+
+2000-11-18 03:19  angelos
+
+	* sys/net/pfkeyv2.h: Update list of algorithms
+	  (hshoexer@rommelwood.de)
+
+2000-11-17 04:08  angelos
+
+	* sys/net/pfkeyv2.h: *HMAC96->*HMAC
+
+	  Also, sync with IANA -- closes PR 1508.
+
+2000-11-11 05:07  angelos
+
+	* sys/net/pfkeyv2.h: CAST128 should be 6 (again itojun@openbsd.org)
+
+2000-11-11 05:00  angelos
+
+	* sys/net/pfkeyv2.h: AES should be 12 (from IANA) --
+	  itojun@openbsd.org
+
+	  Note that you have to recompile ipsecadm and isakmpd if you use a
+	  new kernel.
+
+2000-11-09 22:20  angelos
+
+	* sys/net/pfkeyv2.h: Conform to RFC 2367 numbering
+	  (hshoexer@rommelwood.de)
+
+2000-10-14 06:23  angelos
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: ASKPOLICY message; used
+	  by key management to inquire about policy triggering an ACQUIRE.
+
+2000-10-09 22:20  angelos
+
+	* sys/netinet/ip_ipsp.h: AES support.
+
+2000-10-09 22:16  angelos
+
+	* sys/net/pfkeyv2.h: AES number.
+
+2000-09-20 19:13  angelos
+
+	* sys/netinet/ip_ipsp.h: Add IDENTITY payloads to flow
+	  establishment (and cleanup accordingly) -- this will address one
+	  of itojun's question on how are IDs for IKE to be determined
+	  (need to add support for this to ipsecadm).
+
+2000-09-19 08:38  angelos
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: SA bundles.
+
+2000-09-19 03:20  angelos
+
+	* sys/netinet/ip_ipsp.h: Lots and lots of changes.
+
+2000-09-19 03:19  angelos
+
+	* sys/net/pfkeyv2.h: SPD-driven IPsec.
+
+2000-06-18 19:05  angelos
+
+	* sys/netinet/ip_ipsp.h: Use ip6_sprintf() rather than the
+	  home-cooked inet6_ntoa4()
+
+2000-06-18 05:58  itojun
+
+	* sys/netinet/ip_ipsp.h: IPv6 AH/ESP support, inbound side only.
+	  tested with KAME.
+
+2000-06-06 04:49  angelos
+
+	* sys/netinet/ip_ipsp.h: Get rid of tdb_ref, keep indirect pointer
+	  to TDB.
+
+2000-06-01 04:24  angelos
+
+	* sys/netinet/ip_ipsp.h: ipsp_acquire_sa()
+
+2000-06-01 04:01  angelos
+
+	* sys/netinet/ip_ipsp.h: Prototype for ipsp_spd_lookup()
+
+2000-04-19 03:37  angelos
+
+	* sys/netinet/ip_ipsp.h: tdb_ref should be signed, this avoid a
+	  problem with flushing the TDB table causing repeated allocations
+	  of bypass TDBs.
+
+2000-03-29 07:09  angelos
+
+	* sys/netinet/ip_ipsp.h: Conform to crypto framework changes for
+	  IVs.
+
+2000-03-24 09:09  niklas
+
+	* sys/netinet/ip_ipsp.h: Sync with -current
+
+2000-03-17 10:25  angelos
+
+	* sys/netinet/ip_ipsp.h: Cryptographic services framework, and
+	  software "device driver". The idea is to support various
+	  cryptographic hardware accelerators (which may be (detachable)
+	  cards, secondary/tertiary/etc processors, software crypto, etc).
+	  Supports session migration between crypto devices. What it
+	  doesn't (yet) support:  - multiple instances of the same
+	  algorithm used in the same session  - use of multiple crypto
+	  drivers in the same session  - asymmetric crypto
+
+	  No support for a userland device yet.
+
+	  IPsec code path modified to allow for asynchronous cryptography
+	  (callbacks used in both input and output processing). Some
+	  unrelated code simplification done in the process (especially for
+	  AH).
+
+	  Development of this code kindly supported by Network Security
+	  Technologies (NSTI). The code was writen mostly in Greece, and is
+	  being committed from Montreal.
+
+2000-03-02 07:04  niklas
+
+	* sys/netinet/ip_ipsp.h: Sync with -current
+
+2000-02-28 23:13  deraadt
+
+	* sys/netinet/ip_ipsp.h: move crypto code
+
+2000-01-27 08:09  angelos
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Merge "old" and "new" ESP
+	  and AH in two files (one for each).  Fix a couple of buglets with
+	  ingress flow deletion.  tcpdump on enc0 should now show all
+	  outgoing packets *before* being processed, and all incoming
+	  packets *after* being processed.
+
+	  Good to be in Canada (land of the free commits).
+
+2000-01-21 03:15  angelos
+
+	* sys/netinet/ip_ipsp.h: Rename the ip4_* routines to ipip_*, make
+	  it so GIF tunnels are not affected by net.inet.ipip.allow (the
+	  sysctl formerly known as net.inet.ip4.allow), rename the VIF
+	  ipip_input to ipip_mroute_input.
+
+2000-01-13 06:02  angelos
+
+	* sys/netinet/ip_ipsp.h: mbuf **, not mbuf * you twit...
+
+2000-01-13 05:03  angelos
+
+	* sys/netinet/ip_ipsp.h: Add an ip4_input6() for use with IPv6
+	  (just a wrapper for ip4_input()), add prototype, ifdef include
+	  files.
+
+2000-01-13 00:34  angelos
+
+	* sys/net/pfkeyv2.h: Ingress flow support.
+
+2000-01-13 00:34  angelos
+
+	* sys/netinet/ip_ipsp.h: put_flow(), find_flow(), and delete_flow()
+	  get a third argument (for ingress or egress flow)
+
+2000-01-12 21:39  angelos
+
+	* sys/net/pfkeyv2.h: Major style cleanup for pfkeyv2.c
+
+2000-01-10 06:59  angelos
+
+	* sys/netinet/ip_ipsp.h: Add 10 new ipsec-related sysctl
+	  variables...they are currently under net.inet.ip; perhaps they
+	  should be moved under net.inet.ipsec or some such.
+
+2000-01-10 04:30  angelos
+
+	* sys/netinet/ip_ipsp.h: Add net.inet.ip.ipsec-invalid-life,
+	  default value 60 seconds; the amount of time embryonic SAs will
+	  be kept before they have to be initialized by key management
+	  (this only affects automated key management).
+
+2000-01-10 04:28  angelos
+
+	* sys/net/pfkeyv2.h: externalize pfkeyv2_acquire()
+
+2000-01-09 22:31  angelos
+
+	* sys/netinet/ip_ipsp.h: externalize ipsec_acl
+
+1999-12-29 20:27  mickey
+
+	* sys/netinet/ip_ipsp.h: fix _input/_output proto changes for
+	  tcp_signature; angelos@ ok
+
+1999-12-25 04:48  angelos
+
+	* sys/netinet/ip_ipsp.h: Move the IPsec packet-processing loop to a
+	  separate routine, so we can reuse it in ip6_output and the
+	  bridge. The policy-lookup code will probably follow suit in a
+	  separate routine sometime soon.
+
+1999-12-08 12:10  angelos
+
+	* sys/netinet/ip_ipsp.h: Fix debugging printf compilation.
+
+1999-12-08 06:16  angelos
+
+	* sys/netinet/ip_ipsp.h: IPv6 header handling, improve IPv4 option
+	  handling support.
+
+1999-12-06 07:14  angelos
+
+	* sys/netinet/ip_ipsp.h: New ESP code that's v4 and v6 friendly.
+
+1999-12-04 23:20  angelos
+
+	* sys/net/pfkeyv2.h: IPv6 address support, get rid of the LOCALFLOW
+	  flag
+
+1999-12-04 23:20  angelos
+
+	* sys/netinet/ip_ipsp.h: Address independence, IPv6 support, and
+	  the -local flag in ipsecadm is no longer needed.
+
+1999-11-04 11:17  ho
+
+	* sys/net/pfkeyv2.h: New SADB_SATYPE, IPsec bypass tdb.
+
+1999-10-29 05:20  angelos
+
+	* sys/netinet/ip_ipsp.h: New field in tdb, to be used with
+	  bridging.
+
+1999-10-29 02:10  angelos
+
+	* sys/netinet/ip_ipsp.h: Get rid of unnecessary third argument in
+	  *_output routines of IPsec.
+
+1999-10-29 02:02  angelos
+
+	* sys/netinet/ip_ipsp.h: Remove unnecessary argument from
+	  ipe4_output() and etherip_output()
+
+1999-10-28 03:08  angelos
+
+	* sys/netinet/ip_ipsp.h: Add Ethernet-IP encapsulation handling.
+
+1999-09-29 09:11  niklas
+
+	* sys/netinet/ip_ipsp.h: Critical reliability fix for IPsec.  On
+	  i386 splsoftclock is not a perfect emulation of a "real"
+	  architecture's splsoftclock, as it assumes it is only invoked
+	  from higher spl levels.  Use splsoftnet instead.
+
+1999-08-10 11:35  ho
+
+	* sys/netinet/ip_ipsp.h: Add tdb_satype (PF_KEY SADB_SATYPE_<XXX>)
+	  to struct tdb
+
+1999-08-05 21:58  ho
+
+	* sys/netinet/ip_ipsp.h: Add tdb_walk. tdb_delete() should clean up
+	  routes when deleting flows.
+
+1999-07-15 14:15  niklas
+
+	* sys/netinet/ip_ipsp.h: From angelos@, edits by me, demand keying
+	  for PF_KEY
+
+1999-07-06 20:17  cmetz
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: Added support for TCP MD5
+	  option (RFC 2385).
+
+1999-07-02 23:37  deraadt
+
+	* sys/net/pfkeyv2.h: rename SADB_foo_X_bar to SADB_X_foo_bar
+
+1999-06-30 17:23  deraadt
+
+	* sys/netinet/ip_ipsp.h: remove final low-level crypto knowledge
+	  from base ipsec code
+
+1999-06-18 07:24  deraadt
+
+	* sys/netinet/ip_ipsp.h: split out transforms; some debugging done
+	  but there may still be bugs in the new key init/zero functions
+
+1999-06-06 23:53  angelos
+
+	* sys/netinet/ip_ipsp.h: Ident.
+
+1999-05-23 09:04  niklas
+
+	* sys/netinet/ip_ipsp.h: SA hash table resizing
+
+1999-05-20 12:52  niklas
+
+	* sys/netinet/ip_ipsp.h: Fix a bug where the ordered expiration
+	  list could get out of order.	Add invariant checking of the lists
+	  when DIAGNOSTIC compiled.  Extend the critical region to cover
+	  all of tdb_expiration so the tdb won't disappear behind our back.
+
+1999-05-16 21:48  niklas
+
+	* sys/netinet/ip_ipsp.h: spltdb introduced, protection for tdb
+	  lists and related structures, so they won't disappear behind our
+	  back by an expiration.  Cleanup expiration logic too.
+
+1999-05-14 23:36  niklas
+
+	* sys/netinet/ip_ipsp.h: A new scalable IPsec SA expiration model.
+
+1999-05-11 22:57  niklas
+
+	* sys/netinet/ip_ipsp.h: Remove cruft that wasted space en masse in
+	  the IPsec subsystem
+
+1999-04-11 19:41  niklas
+
+	* sys/netinet/ip_ipsp.h: Introduce net.inet.{ah,esp}.enable sysctl
+	  controls that are off by default.  If you are going to use either
+	  of AH or ESP or both, enable these in /etc/sysctl.conf.  Also
+	  correct the IPSec debugging sysctl code, it is now named
+	  net.inet.ip.encdebug.  Some corrected function signatures too.
+
+1999-03-31 01:20  niklas
+
+	* sys/net/pfkeyv2.h: Implement SADB_SAFLAGS_X_REPLACEFLOW
+
+1999-03-27 21:04  provos
+
+	* sys/: net/pfkeyv2.h, netinet/ip_ipsp.h: add SADB_X_BINDSA to
+	  pfkey allowing incoming SAs to refer to an outgoing SA to be
+	  used, use this SA in ip_output if available. allow mobile road
+	  warriors for bind SAs with wildcard dst and src addresses. check
+	  IPSEC AUTH and ESP level when receiving packets, drop them if
+	  protection is insufficient. add stats to show dropped packets
+	  because of insufficient IPSEC protection. -- phew.  this was all
+	  done in canada. dugsong and linh provided the ride and company.
+
+1999-03-24 17:00  niklas
+
+	* sys/net/pfkeyv2.h: Implement lifetime expiration notifications.
+	  Fix some typos.  Remove statics.
+
+1999-03-02 22:01  deraadt
+
+	* sys/net/pfkeyv2.h: keep track of SATYPE registrations per PFKEY
+	  socket
+
+1999-02-25 01:30  angelos
+
+	* sys/netinet/ip_ipsp.h: Move union sockaddr_union to ip_ipsp.h
+
+1999-02-24 23:45  angelos
+
+	* sys/netinet/ip_ipsp.h: Update copyright; remove a few annoying
+	  debugging printfs.
+
+	  Btw, OpenBSD hit 25000 commits a couple commits ago.
+
+1999-02-24 23:07  deraadt
+
+	* sys/netinet/ip_ipsp.h: add skipjack support back
+
+1999-02-24 22:36  angelos
+
+	* sys/net/pfkeyv2.h: PF_KEY_V2, with local extensions for SPD
+	  management.
+
+1999-02-24 22:33  angelos
+
+	* sys/netinet/ip_ipsp.h: Remove encap.h include; saner debugging
+	  printfs; fix buglets; work with pfkeyv2.
+
+1999-02-17 20:39  deraadt
+
+	* sys/netinet/ip_ipsp.h: ipsec skipjack, based on free .fi code
+	  (some .gov type will test this for me)
+
+1999-02-17 18:10  deraadt
+
+	* sys/netinet/ip_ipsp.h: indent
+
+1999-01-08 21:40  deraadt
+
+	* sys/netinet/ip_ipsp.h: do not use random bits when not necessary,
+	  remove 8-byte block dependence
+
+1998-11-25 11:47  niklas
+
+	* sys/netinet/ip_ipsp.h: typo in comment
+
+1998-05-18 21:10  provos
+
+	* sys/netinet/ip_ipsp.h: first step to the setsockopt/getsockopt
+	  interface as described in draft-mcdonald-simple-ipsec-api, kernel
+	  notifies (EMT_REQUESTSA) signal userland key management
+	  applications when security services are requested.  this is only
+	  for outgoing connections at the moment, incoming packets are not
+	  yet checked against the selected socket policy.
+
+1998-03-18 10:51  provos
+
+	* sys/netinet/ip_ipsp.h: adapt function arguments to get the
+	  expected prototype.
+
+1998-03-18 10:16  provos
+
+	* sys/netinet/ip_ipsp.h: Fix tunnel mode input processing (use
+	  ip4_input instead of ipe4_input), fix some old code leftovers in
+	  ah_new_input (adjust to variable hash length), avoid double ip
+	  encapsulation in tunnel mode. Problems reportd by Petr Novak
+	  <petr@internet.cz>.
+
+1997-11-24 19:14  provos
+
+	* sys/netinet/ip_ipsp.h: add ripemd-160 as authentication function.
+
+1997-11-07 08:29  niklas
+
+	* sys/net/pfkeyv2.h: $OpenBSD$
+
+1997-11-04 09:11  provos
+
+	* sys/netinet/ip_ipsp.h: make it easier to add additional
+	  transforms. add blowfish and cast encryption. some more info for
+	  kernfs/ipsec.
+
+1997-07-27 23:30  niklas
+
+	* sys/netinet/ip_ipsp.h: expiration messages, fixes, updates, all
+	  sorts of things
+
+1997-07-15 23:11  provos
+
+	* sys/netinet/ip_ipsp.h: flags for tunnels and replacing existing
+	  routes, sysctl! + tiny bug fix
+
+1997-07-14 08:46  provos
+
+	* sys/netinet/ip_ipsp.h: sysctl...
+
+1997-07-11 23:37  provos
+
+	* sys/netinet/ip_ipsp.h: put old esp/ah and new esp/ah in different
+	  files.  generalised way of handling transforms.
+
+1997-07-02 06:58  provos
+
+	* sys/netinet/ip_ipsp.h: fix neglected _FLEN's + reserve_spi +
+	  output reserved spi's without alg.  correctly.
+
+1997-07-01 22:12  provos
+
+	* sys/netinet/ip_ipsp.h: major restructuring
+
+1997-06-25 07:53  provos
+
+	* sys/netinet/ip_ipsp.h: hard and soft limits for SPI's per
+	  absolute timer, relative since establish, relative since first
+	  use timers, packet and byte counters. notify key mgmt on soft
+	  limits. key mgmt can now specify limits. new encap messages:
+	  EMT_RESERVESPI, EMT_ENABLESPI, EMT_DISABLESPI
+
+1997-06-24 12:15  provos
+
+	* sys/netinet/ip_ipsp.h: handle IP options in AH + allow IP options
+	  in outgoing encapsulated packets + usage counters for later use
+	  with keymanagement processes
+
+1997-06-21 00:09  deraadt
+
+	* sys/netinet/ip_ipsp.h: u_int32_t changes, need testing
+
+1997-06-20 05:41  provos
+
+	* sys/netinet/ip_ipsp.h: ah-sha1 + esp-3des + indentation
+
+1997-04-28 19:21  angelos
+
+	* sys/net/pfkeyv2.h: Added faddr/laddr on the pfkeycb, for
+	  completeness.
+
+1997-04-27 04:34  angelos
+
+	* sys/net/pfkeyv2.h: PFKEY protocol control blocks.
+
+1997-04-24 23:01  angelos
+
+	* sys/net/pfkeyv2.h: PF_KEYv2 definition as of the latest draft.
+
+1997-02-28 02:55  angelos
+
+	* sys/netinet/ip_ipsp.h: Added flags field in the TDB structure.
+
+1997-02-24 14:06  niklas
+
+	* sys/netinet/ip_ipsp.h: OpenBSD tags + some prototyping police
+
+1997-02-21 08:42  niklas
+
+	* sys/netinet/ip_ipsp.h: -nostdinc and big endian cleanup
+
+1997-02-20 01:08  deraadt
+
+	* sys/netinet/ip_ipsp.h: IPSEC package by John Ioannidis and
+	  Angelos D. Keromytis. Written in Greece. From
+	  ftp.funet.fi:/pub/unix/security/net/ip/BSDipsec.tar.gz
+
