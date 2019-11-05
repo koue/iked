@@ -25,7 +25,7 @@
 #include "types.h"
 #include "dh.h"
 
-#include "compat.h"
+#include "iked_compat.h"
 
 #ifndef IKED_H
 #define IKED_H

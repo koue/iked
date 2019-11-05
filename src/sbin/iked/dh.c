@@ -27,7 +27,7 @@
 
 #include "dh.h"
 
-#include "compat.h"
+#include "iked_compat.h"
 
 int	dh_init(struct group *);
 

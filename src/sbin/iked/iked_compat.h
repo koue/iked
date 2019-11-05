@@ -30,11 +30,10 @@
 #define SIMPLEQ_END(head)		NULL
 #endif
 
-/* OpenBSD 
+/* OpenBSD
 	src/sys/netinet/in.h
 	src/sys/netinet6/in6.h
 */
-	
 #define IP_AUTH_LEVEL		20   /* int; authentication used */
 #define IP_ESP_TRANS_LEVEL	21   /* int; transport encryption */
 #define IP_ESP_NETWORK_LEVEL	22   /* int; full-packet encryption */
@@ -44,10 +43,3 @@
 #define IPV6_AUTH_LEVEL		53   /* int; authentication used */
 
 __attribute__((weak)) void __explicit_bzero_hook(void *, size_t);
-
-void explicit_bzero(void *, size_t);
-
-int getdtablecount(void);
-
-void *reallocarray(void *, size_t, size_t);
-

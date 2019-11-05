@@ -1,0 +1,14 @@
+.depend
+*.crt
+*.debug
+*.full
+*.gz
+*.key
+*.log
+*.o
+*.req
+*.srl
+src/sbin/iked/eap_map.c
+src/sbin/iked/ikev2_map.c
+src/sbin/iked/parse.c
+src/sbin/iked/parse.h
